@@ -34,8 +34,8 @@ def parse_args():
         description="Parallel LLM reasoning evaluation sweep"
     )
     parser.add_argument(
-        "--num_workers", type=int, default=4,
-        help="Number of parallel worker threads (default: 4)"
+        "--num_workers", type=int, default=1,
+        help="Number of parallel worker threads (default: 1)"
     )
     parser.add_argument(
         "--max_samples", type=int, default=None,
@@ -51,8 +51,8 @@ def parse_args():
         help="Directory to save results files"
     )
     parser.add_argument(
-        "--rate_limit", type=float, default=0.15,
-        help="Minimum seconds between API requests across all workers (default: 0.15)"
+        "--rate_limit", type=float, default=3.0,
+        help="Minimum seconds between API requests across all workers (default: 3.0)"
     )
     parser.add_argument(
         "--log_level", type=str, default="INFO",
@@ -780,7 +780,7 @@ def push_results_to_github(results: dict, elapsed: float, failed: int, total_tas
     put_resp = requests.put(api_url, headers=headers, json=payload)
     if put_resp.status_code in (200, 201):
         html_url = put_resp.json().get("content", {}).get("html_url", "")
-        logging.info(f"[GitHub] results_log.json pushed successfully → {html_url}")
+        logging.info(f"[GitHub] results_log.json pushed successfully -> {html_url}")
     else:
         logging.error(f"[GitHub] Push failed: {put_resp.status_code} {put_resp.text}")
 
