@@ -86,8 +86,8 @@ HEADERS = {
 }
 MODEL = "Qwen3.5-4B"
 
-TIMEOUT_SECONDS = 300
-MAX_RETRIES = 4
+TIMEOUT_SECONDS = 600
+MAX_RETRIES = 8
 
 # =====================================================
 # GitHub Results Config
@@ -95,9 +95,9 @@ MAX_RETRIES = 4
 # =====================================================
 
 GITHUB_TOKEN      = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO       = "vmullary/Clinic"   # e.g. "jsmith/clinic-llm"
+GITHUB_REPO       = "vmullary/Clinic"
 GITHUB_BRANCH     = "main"
-GITHUB_RESULTS_PATH = "api_test/results_log.json"  # path inside the repo
+GITHUB_RESULTS_PATH = "api_test/results_log.json"
 
 # --- Loop-detection settings ---
 MAX_LOOP_RETRIES = 3
@@ -381,6 +381,10 @@ def _make_api_call(messages):
             if status == 429:
                 logging.warning(f"[429 Rate Limit] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping 5s...")
                 time.sleep(5)
+            elif status in [500, 502, 503, 504]:
+                wait_time = max(5, min(60, 2 ** attempt * 5))
+                logging.warning(f"[{status} Server Error] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping {wait_time}s...")
+                time.sleep(wait_time)
             else:
                 logging.warning(
                     f"[HTTP {status}] Attempt {attempt+1}/{MAX_RETRIES} — {e} | body: {body}"
@@ -657,10 +661,12 @@ def score_prediction(prediction, persons, pets, gt_person_room, gt_pet_room):
 
 def _run_single_task(task):
     """
-    Execute all combinations for a single question.
+    Execute one (question_index, reasoning_mode, optimization_mode) triple.
     Returns a dict with the results.
     """
     idx = task["index"]
+    r_mode = task["r_mode"]
+    o_mode = task["o_mode"]
     full_prompt = task["full_prompt"]
     persons = task["persons"]
     pets = task["pets"]
@@ -668,46 +674,38 @@ def _run_single_task(task):
     gt_pet_room = task["gt_pet_room"]
     total = task["total"]
     output_dir = task["output_dir"]
-    all_reasoning_modes = task["all_reasoning_modes"]
-    all_optimization_modes = task["all_optimization_modes"]
 
-    logging.info(f"[{idx+1}/{total}] Running all combinations for Question {idx+1}")
-    
-    question_results = []
-    
-    for r_mode in all_reasoning_modes:
-        for o_mode in all_optimization_modes:
-            combo_name = f"{r_mode}_{o_mode}"
-            try:
-                prediction = askLLM(r_mode, o_mode, full_prompt)
-                sc, msc = score_prediction(
-                    prediction, persons, pets, gt_person_room, gt_pet_room
-                )
-            except Exception as e:
-                logging.error(f"[{idx+1}/{total}] {combo_name} FAILED: {e}")
-                prediction = f"[ERROR] {e}"
-                sc, msc = 0, len(persons) * 2 + len(persons)  # worst case
+    combo_name = f"{r_mode}_{o_mode}"
+    logging.info(f"[{idx+1}/{total}] Running: {combo_name}")
 
-            # Write per-question result (thread-safe)
-            filepath = os.path.join(output_dir, f"question{idx+1}_sweep_results.txt")
-            block = (
-                f"[{combo_name}]\n"
-                f"RESPONSE:\n{prediction}\n"
-                f"SCORE: {sc}/{msc}\n"
-                + "-" * 40 + "\n"
-            )
-            _safe_write(filepath, block)
-        
-            question_results.append({
-                "combo_name": combo_name,
-                "score": sc,
-                "max_score": msc,
-                "index": idx,
-            })
+    try:
+        prediction = askLLM(r_mode, o_mode, full_prompt)
+        sc, msc = score_prediction(
+            prediction, persons, pets, gt_person_room, gt_pet_room
+        )
+    except Exception as e:
+        logging.error(f"[{idx+1}/{total}] {combo_name} FAILED: {e}")
+        prediction = f"[ERROR] {e}"
+        sc, msc = 0, len(persons) * 2 + len(persons)  # worst case
 
-    logging.info(f"[{idx+1}/{total}] Completed all combinations for Question {idx+1}")
+    # Write per-question result (thread-safe)
+    filepath = os.path.join(output_dir, f"question{idx+1}_sweep_results.txt")
+    block = (
+        f"[{combo_name}]\n"
+        f"RESPONSE:\n{prediction}\n"
+        f"SCORE: {sc}/{msc}\n"
+        + "-" * 40 + "\n"
+    )
+    _safe_write(filepath, block)
 
-    return question_results
+    logging.info(f"[{idx+1}/{total}] {combo_name} → {sc}/{msc}")
+
+    return {
+        "combo_name": combo_name,
+        "score": sc,
+        "max_score": msc,
+        "index": idx,
+    }
 
 
 # =====================================================
@@ -718,17 +716,16 @@ def _run_single_task(task):
 # GitHub Results Uploader
 # =====================================================
 
-def push_results_to_github(results: dict, elapsed: float, failed: int, total_tasks: int):
+def push_results_to_github(results: dict, elapsed: float, failed: int, total_tasks: int, run_timestamp: str):
     """
-    Append this run's summary to results_log.json on GitHub.
-    Reads the existing file (if any), appends a new entry, and pushes it back
-    using the GitHub Contents API. Requires GITHUB_TOKEN env var to be set.
+    Append or update this run's summary to results_log.json on GitHub.
+    Uses run_timestamp to update the ongoing run rather than duplicating it.
     """
     if not GITHUB_TOKEN:
-        logging.warning("[GitHub] GITHUB_TOKEN not set — skipping upload.")
+        logging.warning("[GitHub] GITHUB_TOKEN not set - skipping upload.")
         return
     if GITHUB_REPO == "YOUR_USERNAME/YOUR_REPO":
-        logging.warning("[GitHub] GITHUB_REPO not configured — skipping upload.")
+        logging.warning("[GitHub] GITHUB_REPO not configured - skipping upload.")
         return
 
     api_url = (
@@ -745,18 +742,16 @@ def push_results_to_github(results: dict, elapsed: float, failed: int, total_tas
         file_info = get_resp.json()
         sha = file_info["sha"]
         existing = json.loads(base64.b64decode(file_info["content"]).decode())
-        logging.info(f"[GitHub] Found existing {GITHUB_RESULTS_PATH} with {len(existing)} entries")
     elif get_resp.status_code == 404:
         sha = None
-        existing = []  # first run — create the file
-        logging.info(f"[GitHub] {GITHUB_RESULTS_PATH} not found — will create it.")
+        existing = []  # first run - create the file
     else:
         logging.error(f"[GitHub] Failed to fetch {GITHUB_RESULTS_PATH}: {get_resp.status_code} {get_resp.text}")
         return
 
     # 2. Build the new entry for this run
     new_entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": run_timestamp,
         "model": MODEL,
         "total_tasks": total_tasks,
         "failed": failed,
@@ -770,7 +765,17 @@ def push_results_to_github(results: dict, elapsed: float, failed: int, total_tas
             for k, v in results.items()
         },
     }
-    existing.append(new_entry)
+    
+    # 3. Append or replace the ongoing run
+    replaced = False
+    for i, entry in enumerate(existing):
+        if entry.get("timestamp") == run_timestamp:
+            existing[i] = new_entry
+            replaced = True
+            break
+            
+    if not replaced:
+        existing.append(new_entry)
 
     # 3. Encode and push
     encoded = base64.b64encode(json.dumps(existing, indent=2).encode()).decode()
@@ -789,7 +794,7 @@ def push_results_to_github(results: dict, elapsed: float, failed: int, total_tas
     put_resp = requests.put(api_url, headers=headers, json=payload)
     if put_resp.status_code in (200, 201):
         html_url = put_resp.json().get("content", {}).get("html_url", "")
-        logging.info(f"[GitHub] results_log.json pushed successfully → {html_url}")
+        logging.info(f"[GitHub] results_log.json pushed successfully -> {html_url}")
     else:
         logging.error(f"[GitHub] Push failed: {put_resp.status_code} {put_resp.text}")
 
@@ -815,9 +820,17 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
         # OptimizationMode.DISTILLATION
     ]
 
+    run_timestamp = datetime.now(timezone.utc).isoformat()
     total = len(ds["train"])
-    if max_samples:
-        total = min(total, max_samples)
+    
+    # Determine the actual list of indices we are going to process
+    indices_to_process = []
+    for i in range(total):
+        if i < start_index:
+            continue
+        indices_to_process.append(i)
+        if max_samples and len(indices_to_process) >= max_samples:
+            break
 
     # Initialise results accumulator
     results = {}
@@ -826,12 +839,27 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
             combo = f"{r}_{o}"
             results[combo] = {"score": 0, "max_score": 0}
 
-    # ---- Build work queue ----
-    tasks = []
-    for i in range(total):
-        if i < start_index:
-            continue
+    total_questions = len(indices_to_process)
+    total_tasks = total_questions * len(all_reasoning_modes) * len(all_optimization_modes)
+    
+    # Setup sensible fallbacks if empty
+    summary_text = ""
+    summary_path = os.path.join(output_dir, "sweep_results.txt")
+    
+    if total_tasks == 0:
+        logging.warning("No questions match the start_index and max_samples filters.")
+        return
+    
+    # ---- Execute Question by Question ----
+    completed_global = 0
+    failed_global = 0
+    start_time = time.monotonic()
 
+    logging.info(
+        f"Starting evaluation: {total_tasks} tasks across {num_workers} workers (Processed by Question)"
+    )
+
+    for i in indices_to_process:
         sample = ds["train"][i]
         full_prompt = sample["prompt"] + "\n\n" + sample["question"]
         ground_truth = sample["completion"]
@@ -848,100 +876,77 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
         )
         _safe_write(filepath, header)
 
-        tasks.append({
-            "index": i,
-            "full_prompt": full_prompt,
-            "persons": persons,
-            "pets": pets,
-            "gt_person_room": gt_person_room,
-            "gt_pet_room": gt_pet_room,
-            "total": total,
-            "output_dir": output_dir,
-            "all_reasoning_modes": all_reasoning_modes,
-            "all_optimization_modes": all_optimization_modes,
-        })
+        # Generate the tasks for this single question
+        question_tasks = []
+        for r_mode in all_reasoning_modes:
+            for o_mode in all_optimization_modes:
+                question_tasks.append({
+                    "index": i,
+                    "r_mode": r_mode,
+                    "o_mode": o_mode,
+                    "full_prompt": full_prompt,
+                    "persons": persons,
+                    "pets": pets,
+                    "gt_person_room": gt_person_room,
+                    "gt_pet_room": gt_pet_room,
+                    "total": total,
+                    "output_dir": output_dir,
+                })
 
-    total_tasks = len(tasks)
-    logging.info(
-        f"Starting evaluation: {total_tasks} questions across {num_workers} workers"
-    )
-    logging.info(
-        f"  Questions: {start_index}–{total-1}  |  "
-        f"Modes: {len(all_reasoning_modes)}R × {len(all_optimization_modes)}O per question"
-    )
+        # Process exactly these 20 combinations in parallel
+        with ThreadPoolExecutor(
+            max_workers=num_workers,
+            thread_name_prefix="LLM-Worker"
+        ) as executor:
+            future_to_task = {
+                executor.submit(_run_single_task, task): task
+                for task in question_tasks
+            }
 
-    # ---- Execute in parallel ----
-    completed = 0
-    failed = 0
-    start_time = time.monotonic()
-
-    with ThreadPoolExecutor(
-        max_workers=num_workers,
-        thread_name_prefix="LLM-Worker"
-    ) as executor:
-        future_to_task = {
-            executor.submit(_run_single_task, task): task
-            for task in tasks
-        }
-
-        for future in as_completed(future_to_task):
-            completed += 1
-            try:
-                question_results = future.result()
-                for result in question_results:
+            for future in as_completed(future_to_task):
+                completed_global += 1
+                try:
+                    result = future.result()
                     combo = result["combo_name"]
+
                     with _results_lock:
                         results[combo]["score"] += result["score"]
                         results[combo]["max_score"] += result["max_score"]
 
-            except Exception as e:
-                failed += 1
-                task = future_to_task[future]
-                logging.error(
-                    f"Question Task [{task['index']+1}] raised: {e}"
-                )
+                except Exception as e:
+                    failed_global += 1
+                    task = future_to_task[future]
+                    logging.error(
+                        f"Task [{task['index']+1}] "
+                        f"{task['r_mode']}_{task['o_mode']} raised: {e}"
+                    )
 
-            # Progress update every 10 complete question tasks
-            if completed % 10 == 0 or completed == total_tasks:
-                elapsed = time.monotonic() - start_time
-                rate = completed / elapsed if elapsed > 0 else 0
-                eta = (total_tasks - completed) / rate if rate > 0 else 0
-                logging.info(
-                    f"Progress: {completed}/{total_tasks} "
-                    f"({completed/total_tasks:.0%}) | "
-                    f"Failed: {failed} | "
-                    f"Rate: {rate:.1f} questions/s | "
-                    f"ETA: {eta:.0f}s"
-                )
+        # Save local summary & upload to GitHub AFTER each question finishes
+        elapsed_so_far = time.monotonic() - start_time
+        summary_lines = [
+            "\n========================================",
+            "CURRENT SUMMARY (Live)",
+            "========================================",
+            f"Total tasks: {completed_global}/{total_tasks}  |  Failed: {failed_global}  |  "
+            f"Time: {elapsed_so_far:.1f}s",
+            "----------------------------------------",
+        ]
+        for k, v in results.items():
+            acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
+            summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
 
-    # ---- Save summary ----
-    elapsed_total = time.monotonic() - start_time
-
-    summary_lines = [
-        "\n========================================",
-        "FINAL SUMMARY",
-        "========================================",
-        f"Total tasks: {total_tasks}  |  Failed: {failed}  |  "
-        f"Time: {elapsed_total:.1f}s",
-        "----------------------------------------",
-    ]
-    for k, v in results.items():
-        acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
-        summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
-
-    summary_text = "\n".join(summary_lines) + "\n"
-    summary_path = os.path.join(output_dir, "sweep_results.txt")
-    _safe_write(summary_path, summary_text)
+        summary_text = "\n".join(summary_lines) + "\n"
+        summary_path = os.path.join(output_dir, "sweep_results.txt")
+        _safe_write(summary_path, summary_text)
+        
+        logging.info(f"Question {i+1} complete. Pushing live results to GitHub...")
+        push_results_to_github(results, elapsed_so_far, failed_global, completed_global, run_timestamp)
 
     print("\n" + "=" * 50)
     print("FINAL RESULTS SUMMARY")
     print("=" * 50)
     print(summary_text)
     print(f"Results saved to: {summary_path}")
-
-    # ---- Push aggregated results to GitHub ----
-    push_results_to_github(results, elapsed_total, failed, total_tasks)
-
 
 # =====================================================
 # Entry Point
