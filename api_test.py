@@ -51,12 +51,8 @@ def parse_args():
         help="Directory to save results files"
     )
     parser.add_argument(
-        "--rate_limit", type=float, default=1.0,
-        help="Minimum seconds between API requests (default: 1.0)"
-    )
-    parser.add_argument(
-        "--question_delay", type=float, default=5.0,
-        help="Seconds to wait between processing different questions (default: 5.0)"
+        "--rate_limit", type=float, default=0.15,
+        help="Minimum seconds between API requests across all workers (default: 0.15)"
     )
     parser.add_argument(
         "--log_level", type=str, default="INFO",
@@ -90,8 +86,8 @@ HEADERS = {
 }
 MODEL = "Qwen3.5-4B"
 
-TIMEOUT_SECONDS = 600
-MAX_RETRIES = 6
+TIMEOUT_SECONDS = 300
+MAX_RETRIES = 4
 
 # =====================================================
 # GitHub Results Config
@@ -385,10 +381,6 @@ def _make_api_call(messages):
             if status == 429:
                 logging.warning(f"[429 Rate Limit] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping 5s...")
                 time.sleep(5)
-            elif status in [500, 502, 503, 504]:
-                wait_time = max(5, min(60, 2 ** attempt * 5))
-                logging.warning(f"[{status} Server Error] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping {wait_time}s...")
-                time.sleep(wait_time)
             else:
                 logging.warning(
                     f"[HTTP {status}] Attempt {attempt+1}/{MAX_RETRIES} — {e} | body: {body}"
@@ -397,7 +389,6 @@ def _make_api_call(messages):
         except RequestException as e:
             logging.warning(f"[Request Failed] Attempt {attempt+1}/{MAX_RETRIES} — {e}")
 
-        # Default backoff
         time.sleep(2 ** attempt)
 
     logging.warning("Max retries exceeded — returning None.")
@@ -666,12 +657,10 @@ def score_prediction(prediction, persons, pets, gt_person_room, gt_pet_room):
 
 def _run_single_task(task):
     """
-    Execute one (question_index, reasoning_mode, optimization_mode) triple.
+    Execute all combinations for a single question.
     Returns a dict with the results.
     """
     idx = task["index"]
-    r_mode = task["r_mode"]
-    o_mode = task["o_mode"]
     full_prompt = task["full_prompt"]
     persons = task["persons"]
     pets = task["pets"]
@@ -679,38 +668,46 @@ def _run_single_task(task):
     gt_pet_room = task["gt_pet_room"]
     total = task["total"]
     output_dir = task["output_dir"]
+    all_reasoning_modes = task["all_reasoning_modes"]
+    all_optimization_modes = task["all_optimization_modes"]
 
-    combo_name = f"{r_mode}_{o_mode}"
-    logging.info(f"[{idx+1}/{total}] Running: {combo_name}")
+    logging.info(f"[{idx+1}/{total}] Running all combinations for Question {idx+1}")
+    
+    question_results = []
+    
+    for r_mode in all_reasoning_modes:
+        for o_mode in all_optimization_modes:
+            combo_name = f"{r_mode}_{o_mode}"
+            try:
+                prediction = askLLM(r_mode, o_mode, full_prompt)
+                sc, msc = score_prediction(
+                    prediction, persons, pets, gt_person_room, gt_pet_room
+                )
+            except Exception as e:
+                logging.error(f"[{idx+1}/{total}] {combo_name} FAILED: {e}")
+                prediction = f"[ERROR] {e}"
+                sc, msc = 0, len(persons) * 2 + len(persons)  # worst case
 
-    try:
-        prediction = askLLM(r_mode, o_mode, full_prompt)
-        sc, msc = score_prediction(
-            prediction, persons, pets, gt_person_room, gt_pet_room
-        )
-    except Exception as e:
-        logging.error(f"[{idx+1}/{total}] {combo_name} FAILED: {e}")
-        prediction = f"[ERROR] {e}"
-        sc, msc = 0, len(persons) * 2 + len(persons)  # worst case
+            # Write per-question result (thread-safe)
+            filepath = os.path.join(output_dir, f"question{idx+1}_sweep_results.txt")
+            block = (
+                f"[{combo_name}]\n"
+                f"RESPONSE:\n{prediction}\n"
+                f"SCORE: {sc}/{msc}\n"
+                + "-" * 40 + "\n"
+            )
+            _safe_write(filepath, block)
+        
+            question_results.append({
+                "combo_name": combo_name,
+                "score": sc,
+                "max_score": msc,
+                "index": idx,
+            })
 
-    # Write per-question result (thread-safe)
-    filepath = os.path.join(output_dir, f"question{idx+1}_sweep_results.txt")
-    block = (
-        f"[{combo_name}]\n"
-        f"RESPONSE:\n{prediction}\n"
-        f"SCORE: {sc}/{msc}\n"
-        + "-" * 40 + "\n"
-    )
-    _safe_write(filepath, block)
+    logging.info(f"[{idx+1}/{total}] Completed all combinations for Question {idx+1}")
 
-    logging.info(f"[{idx+1}/{total}] {combo_name} -> {sc}/{msc}")
-
-    return {
-        "combo_name": combo_name,
-        "score": sc,
-        "max_score": msc,
-        "index": idx,
-    }
+    return question_results
 
 
 # =====================================================
@@ -792,12 +789,12 @@ def push_results_to_github(results: dict, elapsed: float, failed: int, total_tas
     put_resp = requests.put(api_url, headers=headers, json=payload)
     if put_resp.status_code in (200, 201):
         html_url = put_resp.json().get("content", {}).get("html_url", "")
-        logging.info(f"[GitHub] results_log.json pushed successfully -> {html_url}")
+        logging.info(f"[GitHub] results_log.json pushed successfully → {html_url}")
     else:
         logging.error(f"[GitHub] Push failed: {put_resp.status_code} {put_resp.text}")
 
 
-def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir, question_delay):
+def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir):
     """Run the full evaluation sweep in parallel."""
     ds = load_dataset("emunah/deductive_logical_reasoning-room_assignment")
 
@@ -860,73 +857,62 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir,
             "gt_pet_room": gt_pet_room,
             "total": total,
             "output_dir": output_dir,
-            "combos": [(r, o) for r in all_reasoning_modes for o in all_optimization_modes],
+            "all_reasoning_modes": all_reasoning_modes,
+            "all_optimization_modes": all_optimization_modes,
         })
 
-    total_questions = len(tasks)
+    total_tasks = len(tasks)
     logging.info(
-        f"Starting evaluation: {total_questions} questions across {num_workers} workers"
+        f"Starting evaluation: {total_tasks} questions across {num_workers} workers"
     )
     logging.info(
         f"  Questions: {start_index}–{total-1}  |  "
         f"Modes: {len(all_reasoning_modes)}R × {len(all_optimization_modes)}O per question"
     )
 
-    # ---- Execute Question by Question mapping to workers ----
-    completed_questions = 0
-    failed_questions = 0
+    # ---- Execute in parallel ----
+    completed = 0
+    failed = 0
     start_time = time.monotonic()
 
-    for task in tasks:
-        # Build individual worker tasks for this ONE question
-        question_tasks = []
-        for r_mode, o_mode in task["combos"]:
-            q_task = task.copy()
-            del q_task["combos"]
-            q_task["r_mode"] = r_mode
-            q_task["o_mode"] = o_mode
-            question_tasks.append(q_task)
-            
-        question_failed = False
-        
-        with ThreadPoolExecutor(max_workers=num_workers, thread_name_prefix="LLM-Worker") as executor:
-            future_to_task = {
-                executor.submit(_run_single_task, qt): qt
-                for qt in question_tasks
-            }
-            
-            for future in as_completed(future_to_task):
-                try:
-                    result = future.result()
+    with ThreadPoolExecutor(
+        max_workers=num_workers,
+        thread_name_prefix="LLM-Worker"
+    ) as executor:
+        future_to_task = {
+            executor.submit(_run_single_task, task): task
+            for task in tasks
+        }
+
+        for future in as_completed(future_to_task):
+            completed += 1
+            try:
+                question_results = future.result()
+                for result in question_results:
                     combo = result["combo_name"]
                     with _results_lock:
                         results[combo]["score"] += result["score"]
                         results[combo]["max_score"] += result["max_score"]
-                except Exception as e:
-                    question_failed = True
-                    qt = future_to_task[future]
-                    logging.error(f"Task [{qt['index']+1}] {qt['r_mode']}_{qt['o_mode']} raised: {e}")
 
-        completed_questions += 1
-        if question_failed:
-            failed_questions += 1
+            except Exception as e:
+                failed += 1
+                task = future_to_task[future]
+                logging.error(
+                    f"Question Task [{task['index']+1}] raised: {e}"
+                )
 
-        # Progress update every question
-        elapsed = time.monotonic() - start_time
-        rate = completed_questions / elapsed if elapsed > 0 else 0
-        eta = (total_questions - completed_questions) / rate if rate > 0 else 0
-        logging.info(
-            f"Progress: {completed_questions}/{total_questions} "
-            f"({completed_questions/total_questions:.0%}) | "
-            f"Failed: {failed_questions} | "
-            f"Rate: {rate:.3f} questions/s | "
-            f"ETA: {eta:.0f}s"
-        )
-        
-        # Add a delay between questions if not the last one
-        if completed_questions < total_questions and question_delay > 0:
-            logging.info(f"Waiting {question_delay}s before next question...")
-            time.sleep(question_delay)
+            # Progress update every 10 complete question tasks
+            if completed % 10 == 0 or completed == total_tasks:
+                elapsed = time.monotonic() - start_time
+                rate = completed / elapsed if elapsed > 0 else 0
+                eta = (total_tasks - completed) / rate if rate > 0 else 0
+                logging.info(
+                    f"Progress: {completed}/{total_tasks} "
+                    f"({completed/total_tasks:.0%}) | "
+                    f"Failed: {failed} | "
+                    f"Rate: {rate:.1f} questions/s | "
+                    f"ETA: {eta:.0f}s"
+                )
 
     # ---- Save summary ----
     elapsed_total = time.monotonic() - start_time
@@ -935,7 +921,7 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir,
         "\n========================================",
         "FINAL SUMMARY",
         "========================================",
-        f"Total tasks: {total_questions}  |  Failed: {failed_questions}  |  "
+        f"Total tasks: {total_tasks}  |  Failed: {failed}  |  "
         f"Time: {elapsed_total:.1f}s",
         "----------------------------------------",
     ]
@@ -954,7 +940,8 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir,
     print(f"Results saved to: {summary_path}")
 
     # ---- Push aggregated results to GitHub ----
-    push_results_to_github(results, elapsed_total, failed_questions, total_questions)
+    push_results_to_github(results, elapsed_total, failed, total_tasks)
+
 
 # =====================================================
 # Entry Point
@@ -973,7 +960,6 @@ if __name__ == "__main__":
     logging.info(f"  Start index: {args.start_index}")
     logging.info(f"  Output dir:  {args.output_dir}")
     logging.info(f"  Rate limit:  {args.rate_limit}s between requests")
-    logging.info(f"  Q Delay:     {args.question_delay}s between questions")
     logging.info(f"  Model:       {MODEL}")
 
     evaluate_all_combinations(
@@ -981,5 +967,4 @@ if __name__ == "__main__":
         max_samples=args.max_samples,
         start_index=args.start_index,
         output_dir=args.output_dir,
-        question_delay=args.question_delay
     )
