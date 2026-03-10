@@ -678,6 +678,13 @@ def _run_single_task(task):
     combo_name = f"{r_mode}_{o_mode}"
     logging.info(f"[{idx+1}/{total}] Running: {combo_name}")
 
+    # Induce an artificial staggered startup delay based on task index to prevent a Thundering Herd
+    global_task_index = task.get("global_task_index", 0)
+    if global_task_index < 20: # Only stagger the very first batch of workers 
+        # e.g Worker 0 sleeps 0s, Worker 4 sleeps 2.0s
+        startup_delay = global_task_index * 0.5 
+        time.sleep(startup_delay)
+
     try:
         prediction = askLLM(r_mode, o_mode, full_prompt)
         sc, msc = score_prediction(
@@ -882,6 +889,7 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
                     "gt_pet_room": gt_pet_room,
                     "total": total,
                     "output_dir": output_dir,
+                    "global_task_index": len(all_tasks),
                 })
 
     # Track completion per question
