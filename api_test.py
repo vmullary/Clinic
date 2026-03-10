@@ -34,7 +34,7 @@ def parse_args():
         description="Parallel LLM reasoning evaluation sweep"
     )
     parser.add_argument(
-        "--num_workers", type=int, default=4,
+        "--num_workers", type=int, default=20,
         help="Number of parallel worker threads (default: 4)"
     )
     parser.add_argument(
@@ -850,15 +850,8 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
         logging.warning("No questions match the start_index and max_samples filters.")
         return
     
-    # ---- Execute Question by Question ----
-    completed_global = 0
-    failed_global = 0
-    start_time = time.monotonic()
-
-    logging.info(
-        f"Starting evaluation: {total_tasks} tasks across {num_workers} workers (Processed by Question)"
-    )
-
+    # ---- Generate All Tasks ----
+    all_tasks = []
     for i in indices_to_process:
         sample = ds["train"][i]
         full_prompt = sample["prompt"] + "\n\n" + sample["question"]
@@ -876,11 +869,9 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
         )
         _safe_write(filepath, header)
 
-        # Generate the tasks for this single question
-        question_tasks = []
         for r_mode in all_reasoning_modes:
             for o_mode in all_optimization_modes:
-                question_tasks.append({
+                all_tasks.append({
                     "index": i,
                     "r_mode": r_mode,
                     "o_mode": o_mode,
@@ -893,54 +884,72 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
                     "output_dir": output_dir,
                 })
 
-        # Process exactly these 20 combinations in parallel
-        with ThreadPoolExecutor(
-            max_workers=num_workers,
-            thread_name_prefix="LLM-Worker"
-        ) as executor:
-            future_to_task = {
-                executor.submit(_run_single_task, task): task
-                for task in question_tasks
-            }
+    # Track completion per question
+    tasks_per_question = len(all_reasoning_modes) * len(all_optimization_modes)
+    question_completions = {i: 0 for i in indices_to_process}
 
-            for future in as_completed(future_to_task):
-                completed_global += 1
-                try:
-                    result = future.result()
-                    combo = result["combo_name"]
+    # ---- Execute All Tasks ----
+    completed_global = 0
+    failed_global = 0
+    start_time = time.monotonic()
 
-                    with _results_lock:
-                        results[combo]["score"] += result["score"]
-                        results[combo]["max_score"] += result["max_score"]
+    logging.info(
+        f"Starting evaluation: {total_tasks} tasks across {num_workers} workers (Continuous Queue)"
+    )
 
-                except Exception as e:
-                    failed_global += 1
-                    task = future_to_task[future]
-                    logging.error(
-                        f"Task [{task['index']+1}] "
-                        f"{task['r_mode']}_{task['o_mode']} raised: {e}"
-                    )
+    with ThreadPoolExecutor(
+        max_workers=num_workers,
+        thread_name_prefix="LLM-Worker"
+    ) as executor:
+        future_to_task = {
+            executor.submit(_run_single_task, task): task
+            for task in all_tasks
+        }
 
-        # Save local summary & upload to GitHub AFTER each question finishes
-        elapsed_so_far = time.monotonic() - start_time
-        summary_lines = [
-            "\n========================================",
-            "CURRENT SUMMARY (Live)",
-            "========================================",
-            f"Total tasks: {completed_global}/{total_tasks}  |  Failed: {failed_global}  |  "
-            f"Time: {elapsed_so_far:.1f}s",
-            "----------------------------------------",
-        ]
-        for k, v in results.items():
-            acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
-            summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
+        for future in as_completed(future_to_task):
+            completed_global += 1
+            task = future_to_task[future]
+            try:
+                result = future.result()
+                combo = result["combo_name"]
 
-        summary_text = "\n".join(summary_lines) + "\n"
-        summary_path = os.path.join(output_dir, "sweep_results.txt")
-        _safe_write(summary_path, summary_text)
-        
-        logging.info(f"Question {i+1} complete. Pushing live results to GitHub...")
-        push_results_to_github(results, elapsed_so_far, failed_global, completed_global, run_timestamp)
+                with _results_lock:
+                    results[combo]["score"] += result["score"]
+                    results[combo]["max_score"] += result["max_score"]
+
+            except Exception as e:
+                failed_global += 1
+                logging.error(
+                    f"Task [{task['index']+1}] "
+                    f"{task['r_mode']}_{task['o_mode']} raised: {e}"
+                )
+
+            # Save live local summary every time a single combination finishes
+            elapsed_so_far = time.monotonic() - start_time
+            summary_lines = [
+                "\n========================================",
+                "CURRENT SUMMARY (Live)",
+                "========================================",
+                f"Total tasks: {completed_global}/{total_tasks}  |  Failed: {failed_global}  |  "
+                f"Time: {elapsed_so_far:.1f}s",
+                "----------------------------------------",
+            ]
+            for k, v in results.items():
+                acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
+                summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
+
+            summary_text = "\n".join(summary_lines) + "\n"
+            summary_path = os.path.join(output_dir, "sweep_results.txt")
+            _safe_write(summary_path, summary_text)
+
+            # Mark this question's combination as complete
+            q_index = task["index"]
+            question_completions[q_index] += 1
+
+            # If this question is fully complete across all combinations, push to GitHub
+            if question_completions[q_index] == tasks_per_question:
+                logging.info(f"Question {q_index+1} complete. Pushing live results to GitHub...")
+                push_results_to_github(results, elapsed_so_far, failed_global, completed_global, run_timestamp)
 
     print("\n" + "=" * 50)
     print("FINAL RESULTS SUMMARY")
