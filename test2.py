@@ -14,12 +14,14 @@ import re
 import sys
 import time
 import json
+import base64
 import argparse
 import logging
 import threading
 import requests
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from requests.exceptions import Timeout, HTTPError, RequestException
 from datasets import load_dataset
 
@@ -86,6 +88,16 @@ MODEL = "Qwen/Qwen3.5-27B-FP8"
 
 TIMEOUT_SECONDS = 300
 MAX_RETRIES = 4
+
+# =====================================================
+# GitHub Results Config
+# Set GITHUB_TOKEN env var with a PAT that has repo Contents read+write.
+# =====================================================
+
+GITHUB_TOKEN      = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_REPO       = "vmullary/Clinic"
+GITHUB_BRANCH     = "main"
+GITHUB_RESULTS_PATH = "test2/results_log.json"  # path inside the repo
 
 # --- Loop-detection settings ---
 MAX_LOOP_RETRIES = 3
@@ -696,6 +708,83 @@ def _run_single_task(task):
 # Main Evaluation — Parallel
 # =====================================================
 
+# =====================================================
+# GitHub Results Uploader
+# =====================================================
+
+def push_results_to_github(results: dict, elapsed: float, failed: int, total_tasks: int):
+    """
+    Append this run's summary to results_log.json on GitHub.
+    Reads the existing file (if any), appends a new entry, and pushes it back
+    using the GitHub Contents API. Requires GITHUB_TOKEN env var to be set.
+    """
+    if not GITHUB_TOKEN:
+        logging.warning("[GitHub] GITHUB_TOKEN not set — skipping upload.")
+        return
+
+    api_url = (
+        f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_RESULTS_PATH}"
+    )
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+    }
+
+    # 1. Fetch existing file (to get SHA for update, and current entries)
+    get_resp = requests.get(api_url, headers=headers)
+    if get_resp.status_code == 200:
+        file_info = get_resp.json()
+        sha = file_info["sha"]
+        existing = json.loads(base64.b64decode(file_info["content"]).decode())
+        logging.info(f"[GitHub] Found existing {GITHUB_RESULTS_PATH} with {len(existing)} entries")
+    elif get_resp.status_code == 404:
+        sha = None
+        existing = []  # first run — create the file
+        logging.info(f"[GitHub] {GITHUB_RESULTS_PATH} not found — will create it.")
+    else:
+        logging.error(f"[GitHub] Failed to fetch {GITHUB_RESULTS_PATH}: {get_resp.status_code} {get_resp.text}")
+        return
+
+    # 2. Build the new entry for this run
+    new_entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "model": MODEL,
+        "total_tasks": total_tasks,
+        "failed": failed,
+        "elapsed_seconds": round(elapsed, 1),
+        "scores": {
+            k: {
+                "accuracy": round(v["score"] / v["max_score"], 4) if v["max_score"] > 0 else 0.0,
+                "score": v["score"],
+                "max_score": v["max_score"],
+            }
+            for k, v in results.items()
+        },
+    }
+    existing.append(new_entry)
+
+    # 3. Encode and push
+    encoded = base64.b64encode(json.dumps(existing, indent=2).encode()).decode()
+    commit_msg = (
+        f"results: {new_entry['timestamp'][:10]} | "
+        f"{total_tasks} tasks | model={MODEL}"
+    )
+    payload = {
+        "message": commit_msg,
+        "content": encoded,
+        "branch": GITHUB_BRANCH,
+    }
+    if sha:
+        payload["sha"] = sha  # required when updating an existing file
+
+    put_resp = requests.put(api_url, headers=headers, json=payload)
+    if put_resp.status_code in (200, 201):
+        html_url = put_resp.json().get("content", {}).get("html_url", "")
+        logging.info(f"[GitHub] results_log.json pushed successfully → {html_url}")
+    else:
+        logging.error(f"[GitHub] Push failed: {put_resp.status_code} {put_resp.text}")
+
+
 def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir):
     """Run the full evaluation sweep in parallel."""
     ds = load_dataset("emunah/deductive_logical_reasoning-room_assignment")
@@ -843,6 +932,9 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
     print("=" * 50)
     print(summary_text)
     print(f"Results saved to: {summary_path}")
+
+    # ---- Push aggregated results to GitHub ----
+    push_results_to_github(results, elapsed_total, failed, total_tasks)
 
 
 # =====================================================
