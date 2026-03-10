@@ -1,0 +1,16 @@
+/.ipynb_checkpoints
+/.vscode
+/Clinic.code-workspace
+/llmclient.ipynb
+/output.txt
+/racing_game_client.py
+/sample.json
+/simple_mqtt_llm_client.py
+/sweep_results.txt
+/test_sft.py
+/tree_inference_scaling.txt
+/tree_none.txt
+/tree_sft_rl
+/tree_sft_rl.txt
+/Untitled.ipynb
+/__pycache__
