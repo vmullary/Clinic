@@ -1,1 +1,87 @@
-[]
+[
+  {
+    "timestamp": "2026-03-11T22:08:52.446696",
+    "results": {
+      "direct_inference_scaling": {
+        "score": 12,
+        "max_score": 126
+      },
+      "direct_pure_rl": {
+        "score": 39,
+        "max_score": 999
+      },
+      "direct_sft": {
+        "score": 50,
+        "max_score": 963
+      },
+      "direct_sft_rl": {
+        "score": 155,
+        "max_score": 918
+      },
+      "multi_step_inference_scaling": {
+        "score": 9,
+        "max_score": 81
+      },
+      "multi_step_pure_rl": {
+        "score": 0,
+        "max_score": 891
+      },
+      "multi_step_sft": {
+        "score": 64,
+        "max_score": 864
+      },
+      "multi_step_sft_rl": {
+        "score": 46,
+        "max_score": 837
+      },
+      "chain_inference_scaling": {
+        "score": 7,
+        "max_score": 63
+      },
+      "chain_pure_rl": {
+        "score": 0,
+        "max_score": 810
+      },
+      "chain_sft": {
+        "score": 132,
+        "max_score": 783
+      },
+      "chain_sft_rl": {
+        "score": 112,
+        "max_score": 756
+      },
+      "tree_inference_scaling": {
+        "score": 0,
+        "max_score": 54
+      },
+      "tree_pure_rl": {
+        "score": 53,
+        "max_score": 720
+      },
+      "tree_sft": {
+        "score": 71,
+        "max_score": 693
+      },
+      "tree_sft_rl": {
+        "score": 0,
+        "max_score": 657
+      },
+      "continuous_inference_scaling": {
+        "score": 3,
+        "max_score": 9
+      },
+      "continuous_pure_rl": {
+        "score": 134,
+        "max_score": 603
+      },
+      "continuous_sft": {
+        "score": 0,
+        "max_score": 567
+      },
+      "continuous_sft_rl": {
+        "score": 143,
+        "max_score": 540
+      }
+    }
+  }
+]
