@@ -220,9 +220,9 @@
   {
     "timestamp": "2026-03-12T16:19:23.957066+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 15943,
+    "total_tasks": 15950,
     "failed": 0,
-    "elapsed_seconds": 27219.4,
+    "elapsed_seconds": 27229.1,
     "scores": {
       "direct_inference_scaling": {
         "accuracy": 0.1743,
@@ -231,18 +231,18 @@
       },
       "direct_pure_rl": {
         "accuracy": 0.2532,
-        "score": 3612,
-        "max_score": 14265
+        "score": 3617,
+        "max_score": 14286
       },
       "direct_sft": {
-        "accuracy": 0.1857,
+        "accuracy": 0.1854,
         "score": 2649,
-        "max_score": 14265
+        "max_score": 14286
       },
       "direct_sft_rl": {
-        "accuracy": 0.1886,
-        "score": 2691,
-        "max_score": 14265
+        "accuracy": 0.1889,
+        "score": 2698,
+        "max_score": 14286
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.2871,
@@ -266,8 +266,8 @@
       },
       "chain_inference_scaling": {
         "accuracy": 0.3328,
-        "score": 4727,
-        "max_score": 14202
+        "score": 4733,
+        "max_score": 14223
       },
       "chain_pure_rl": {
         "accuracy": 0.3045,
@@ -285,9 +285,9 @@
         "max_score": 14265
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3362,
-        "score": 4767,
-        "max_score": 14181
+        "accuracy": 0.3359,
+        "score": 4771,
+        "max_score": 14202
       },
       "tree_pure_rl": {
         "accuracy": 0.3454,
@@ -310,14 +310,14 @@
         "max_score": 14202
       },
       "continuous_pure_rl": {
-        "accuracy": 0.2676,
+        "accuracy": 0.2672,
         "score": 3811,
-        "max_score": 14244
+        "max_score": 14265
       },
       "continuous_sft": {
-        "accuracy": 0.3045,
-        "score": 4338,
-        "max_score": 14244
+        "accuracy": 0.3047,
+        "score": 4347,
+        "max_score": 14265
       },
       "continuous_sft_rl": {
         "accuracy": 0.2698,
