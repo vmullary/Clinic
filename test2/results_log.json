@@ -220,109 +220,109 @@
   {
     "timestamp": "2026-03-12T16:19:23.957066+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 2479,
+    "total_tasks": 2511,
     "failed": 0,
-    "elapsed_seconds": 6282.6,
+    "elapsed_seconds": 6349.2,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1721,
+        "accuracy": 0.1705,
         "score": 315,
-        "max_score": 1830
+        "max_score": 1848
       },
       "direct_pure_rl": {
-        "accuracy": 0.2393,
-        "score": 438,
-        "max_score": 1830
+        "accuracy": 0.2369,
+        "score": 442,
+        "max_score": 1866
       },
       "direct_sft": {
-        "accuracy": 0.1279,
+        "accuracy": 0.1254,
         "score": 234,
-        "max_score": 1830
+        "max_score": 1866
       },
       "direct_sft_rl": {
-        "accuracy": 0.2025,
+        "accuracy": 0.1986,
         "score": 367,
-        "max_score": 1812
+        "max_score": 1848
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.3333,
-        "score": 598,
-        "max_score": 1794
+        "score": 604,
+        "max_score": 1812
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.259,
+        "accuracy": 0.2565,
         "score": 474,
-        "max_score": 1830
+        "max_score": 1848
       },
       "multi_step_sft": {
-        "accuracy": 0.3033,
+        "accuracy": 0.3003,
         "score": 555,
-        "max_score": 1830
+        "max_score": 1848
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.2689,
-        "score": 492,
-        "max_score": 1830
+        "accuracy": 0.2673,
+        "score": 494,
+        "max_score": 1848
       },
       "chain_inference_scaling": {
-        "accuracy": 0.3896,
-        "score": 685,
-        "max_score": 1758
+        "accuracy": 0.3852,
+        "score": 691,
+        "max_score": 1794
       },
       "chain_pure_rl": {
-        "accuracy": 0.3825,
-        "score": 700,
-        "max_score": 1830
+        "accuracy": 0.3804,
+        "score": 703,
+        "max_score": 1848
       },
       "chain_sft": {
-        "accuracy": 0.378,
-        "score": 685,
-        "max_score": 1812
+        "accuracy": 0.3755,
+        "score": 694,
+        "max_score": 1848
       },
       "chain_sft_rl": {
-        "accuracy": 0.3499,
-        "score": 634,
-        "max_score": 1812
+        "accuracy": 0.3474,
+        "score": 642,
+        "max_score": 1848
       },
       "tree_inference_scaling": {
-        "accuracy": 0.4091,
-        "score": 734,
-        "max_score": 1794
+        "accuracy": 0.4078,
+        "score": 739,
+        "max_score": 1812
       },
       "tree_pure_rl": {
-        "accuracy": 0.4145,
-        "score": 751,
-        "max_score": 1812
+        "accuracy": 0.4107,
+        "score": 759,
+        "max_score": 1848
       },
       "tree_sft": {
-        "accuracy": 0.4211,
-        "score": 763,
-        "max_score": 1812
+        "accuracy": 0.4215,
+        "score": 779,
+        "max_score": 1848
       },
       "tree_sft_rl": {
-        "accuracy": 0.4537,
-        "score": 814,
-        "max_score": 1794
+        "accuracy": 0.4502,
+        "score": 832,
+        "max_score": 1848
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3863,
-        "score": 686,
-        "max_score": 1776
+        "accuracy": 0.3902,
+        "score": 707,
+        "max_score": 1812
       },
       "continuous_pure_rl": {
-        "accuracy": 0.3245,
-        "score": 588,
-        "max_score": 1812
+        "accuracy": 0.3246,
+        "score": 594,
+        "max_score": 1830
       },
       "continuous_sft": {
-        "accuracy": 0.3615,
-        "score": 655,
-        "max_score": 1812
+        "accuracy": 0.3596,
+        "score": 658,
+        "max_score": 1830
       },
       "continuous_sft_rl": {
-        "accuracy": 0.3747,
-        "score": 679,
-        "max_score": 1812
+        "accuracy": 0.3712,
+        "score": 686,
+        "max_score": 1848
       }
     }
   }
