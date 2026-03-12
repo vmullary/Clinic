@@ -220,14 +220,14 @@
   {
     "timestamp": "2026-03-12T16:19:23.957066+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 12571,
+    "total_tasks": 12572,
     "failed": 0,
-    "elapsed_seconds": 21661.0,
+    "elapsed_seconds": 21662.2,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1762,
+        "accuracy": 0.1759,
         "score": 1918,
-        "max_score": 10884
+        "max_score": 10902
       },
       "direct_pure_rl": {
         "accuracy": 0.2533,
