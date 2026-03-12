@@ -220,9 +220,9 @@
   {
     "timestamp": "2026-03-12T16:19:23.957066+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 1670,
+    "total_tasks": 1683,
     "failed": 0,
-    "elapsed_seconds": 4920.0,
+    "elapsed_seconds": 4940.0,
     "scores": {
       "direct_inference_scaling": {
         "accuracy": 0.1704,
@@ -251,18 +251,18 @@
       },
       "multi_step_pure_rl": {
         "accuracy": 0.2635,
-        "score": 313,
-        "max_score": 1188
+        "score": 317,
+        "max_score": 1203
       },
       "multi_step_sft": {
-        "accuracy": 0.3224,
+        "accuracy": 0.3184,
         "score": 383,
-        "max_score": 1188
+        "max_score": 1203
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.2879,
+        "accuracy": 0.2843,
         "score": 342,
-        "max_score": 1188
+        "max_score": 1203
       },
       "chain_inference_scaling": {
         "accuracy": 0.4024,
@@ -270,29 +270,29 @@
         "max_score": 1158
       },
       "chain_pure_rl": {
-        "accuracy": 0.3956,
-        "score": 470,
-        "max_score": 1188
+        "accuracy": 0.3932,
+        "score": 473,
+        "max_score": 1203
       },
       "chain_sft": {
-        "accuracy": 0.3737,
-        "score": 444,
-        "max_score": 1188
+        "accuracy": 0.3774,
+        "score": 454,
+        "max_score": 1203
       },
       "chain_sft_rl": {
-        "accuracy": 0.3527,
-        "score": 419,
-        "max_score": 1188
+        "accuracy": 0.3508,
+        "score": 422,
+        "max_score": 1203
       },
       "tree_inference_scaling": {
-        "accuracy": 0.4243,
-        "score": 485,
-        "max_score": 1143
+        "accuracy": 0.4206,
+        "score": 487,
+        "max_score": 1158
       },
       "tree_pure_rl": {
-        "accuracy": 0.431,
-        "score": 512,
-        "max_score": 1188
+        "accuracy": 0.4289,
+        "score": 516,
+        "max_score": 1203
       },
       "tree_sft": {
         "accuracy": 0.4478,
@@ -305,19 +305,19 @@
         "max_score": 1188
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.4269,
-        "score": 488,
-        "max_score": 1143
+        "accuracy": 0.4194,
+        "score": 492,
+        "max_score": 1173
       },
       "continuous_pure_rl": {
-        "accuracy": 0.3158,
-        "score": 361,
-        "max_score": 1143
+        "accuracy": 0.3205,
+        "score": 376,
+        "max_score": 1173
       },
       "continuous_sft": {
-        "accuracy": 0.3725,
-        "score": 437,
-        "max_score": 1173
+        "accuracy": 0.3754,
+        "score": 446,
+        "max_score": 1188
       },
       "continuous_sft_rl": {
         "accuracy": 0.4109,
