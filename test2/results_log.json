@@ -329,29 +329,29 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 11003,
+    "total_tasks": 11026,
     "failed": 0,
-    "elapsed_seconds": 12656.4,
+    "elapsed_seconds": 12681.6,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1471,
+        "accuracy": 0.1468,
         "score": 1702,
-        "max_score": 11571
+        "max_score": 11592
       },
       "direct_pure_rl": {
         "accuracy": 0.3317,
-        "score": 3838,
-        "max_score": 11571
+        "score": 3852,
+        "max_score": 11613
       },
       "direct_sft": {
-        "accuracy": 0.3487,
-        "score": 4035,
-        "max_score": 11571
+        "accuracy": 0.3483,
+        "score": 4045,
+        "max_score": 11613
       },
       "direct_sft_rl": {
-        "accuracy": 0.3477,
-        "score": 4023,
-        "max_score": 11571
+        "accuracy": 0.3475,
+        "score": 4028,
+        "max_score": 11592
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.2522,
@@ -359,79 +359,79 @@
         "max_score": 11508
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.2858,
-        "score": 3307,
-        "max_score": 11571
+        "accuracy": 0.2859,
+        "score": 3314,
+        "max_score": 11592
       },
       "multi_step_sft": {
-        "accuracy": 0.3367,
-        "score": 3896,
-        "max_score": 11571
+        "accuracy": 0.3365,
+        "score": 3901,
+        "max_score": 11592
       },
       "multi_step_sft_rl": {
         "accuracy": 0.2949,
-        "score": 3412,
-        "max_score": 11571
+        "score": 3419,
+        "max_score": 11592
       },
       "chain_inference_scaling": {
-        "accuracy": 0.293,
-        "score": 3372,
-        "max_score": 11508
+        "accuracy": 0.2931,
+        "score": 3379,
+        "max_score": 11529
       },
       "chain_pure_rl": {
-        "accuracy": 0.2763,
-        "score": 3197,
-        "max_score": 11571
+        "accuracy": 0.2767,
+        "score": 3207,
+        "max_score": 11592
       },
       "chain_sft": {
-        "accuracy": 0.3352,
-        "score": 3879,
-        "max_score": 11571
+        "accuracy": 0.3351,
+        "score": 3884,
+        "max_score": 11592
       },
       "chain_sft_rl": {
-        "accuracy": 0.3275,
-        "score": 3789,
-        "max_score": 11571
+        "accuracy": 0.3273,
+        "score": 3794,
+        "max_score": 11592
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3004,
-        "score": 3451,
-        "max_score": 11487
+        "accuracy": 0.3002,
+        "score": 3455,
+        "max_score": 11508
       },
       "tree_pure_rl": {
         "accuracy": 0.313,
-        "score": 3622,
-        "max_score": 11571
+        "score": 3628,
+        "max_score": 11592
       },
       "tree_sft": {
-        "accuracy": 0.3451,
-        "score": 3993,
-        "max_score": 11571
+        "accuracy": 0.3449,
+        "score": 3998,
+        "max_score": 11592
       },
       "tree_sft_rl": {
-        "accuracy": 0.3345,
-        "score": 3870,
-        "max_score": 11571
+        "accuracy": 0.3343,
+        "score": 3875,
+        "max_score": 11592
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3014,
-        "score": 3468,
-        "max_score": 11508
+        "accuracy": 0.3016,
+        "score": 3483,
+        "max_score": 11550
       },
       "continuous_pure_rl": {
-        "accuracy": 0.2287,
-        "score": 2641,
-        "max_score": 11550
+        "accuracy": 0.2293,
+        "score": 2653,
+        "max_score": 11571
       },
       "continuous_sft": {
-        "accuracy": 0.2716,
-        "score": 3137,
-        "max_score": 11550
+        "accuracy": 0.2712,
+        "score": 3144,
+        "max_score": 11592
       },
       "continuous_sft_rl": {
-        "accuracy": 0.2212,
-        "score": 2550,
-        "max_score": 11529
+        "accuracy": 0.221,
+        "score": 2552,
+        "max_score": 11550
       }
     }
   }
