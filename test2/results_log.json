@@ -220,9 +220,9 @@
   {
     "timestamp": "2026-03-12T16:19:23.957066+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 18438,
+    "total_tasks": 18449,
     "failed": 0,
-    "elapsed_seconds": 30776.1,
+    "elapsed_seconds": 30790.8,
     "scores": {
       "direct_inference_scaling": {
         "accuracy": 0.1719,
@@ -230,19 +230,19 @@
         "max_score": 16890
       },
       "direct_pure_rl": {
-        "accuracy": 0.2404,
+        "accuracy": 0.2401,
         "score": 4060,
-        "max_score": 16890
+        "max_score": 16911
       },
       "direct_sft": {
-        "accuracy": 0.1782,
+        "accuracy": 0.178,
         "score": 3010,
-        "max_score": 16890
+        "max_score": 16911
       },
       "direct_sft_rl": {
-        "accuracy": 0.1872,
+        "accuracy": 0.1869,
         "score": 3161,
-        "max_score": 16890
+        "max_score": 16911
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.276,
@@ -260,14 +260,14 @@
         "max_score": 16869
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.2529,
-        "score": 4266,
-        "max_score": 16869
+        "accuracy": 0.2528,
+        "score": 4270,
+        "max_score": 16890
       },
       "chain_inference_scaling": {
-        "accuracy": 0.3225,
-        "score": 5427,
-        "max_score": 16827
+        "accuracy": 0.3221,
+        "score": 5434,
+        "max_score": 16869
       },
       "chain_pure_rl": {
         "accuracy": 0.2965,
@@ -285,9 +285,9 @@
         "max_score": 16869
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3242,
-        "score": 5448,
-        "max_score": 16806
+        "accuracy": 0.3238,
+        "score": 5455,
+        "max_score": 16848
       },
       "tree_pure_rl": {
         "accuracy": 0.337,
@@ -295,14 +295,14 @@
         "max_score": 16869
       },
       "tree_sft": {
-        "accuracy": 0.3489,
-        "score": 5886,
-        "max_score": 16869
+        "accuracy": 0.3488,
+        "score": 5891,
+        "max_score": 16890
       },
       "tree_sft_rl": {
-        "accuracy": 0.3511,
+        "accuracy": 0.3507,
         "score": 5923,
-        "max_score": 16869
+        "max_score": 16890
       },
       "continuous_inference_scaling": {
         "accuracy": 0.3333,
@@ -310,9 +310,9 @@
         "max_score": 16827
       },
       "continuous_pure_rl": {
-        "accuracy": 0.2617,
-        "score": 4414,
-        "max_score": 16869
+        "accuracy": 0.2618,
+        "score": 4422,
+        "max_score": 16890
       },
       "continuous_sft": {
         "accuracy": 0.2927,
