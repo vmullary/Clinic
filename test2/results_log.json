@@ -329,9 +329,9 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 7339,
+    "total_tasks": 7340,
     "failed": 0,
-    "elapsed_seconds": 8864.2,
+    "elapsed_seconds": 8867.3,
     "scores": {
       "direct_inference_scaling": {
         "accuracy": 0.1405,
@@ -374,9 +374,9 @@
         "max_score": 7728
       },
       "chain_inference_scaling": {
-        "accuracy": 0.2941,
-        "score": 2248,
-        "max_score": 7644
+        "accuracy": 0.2938,
+        "score": 2252,
+        "max_score": 7665
       },
       "chain_pure_rl": {
         "accuracy": 0.27,
