@@ -329,109 +329,109 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 18096,
+    "total_tasks": 18127,
     "failed": 0,
-    "elapsed_seconds": 20259.4,
+    "elapsed_seconds": 20309.4,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.144,
-        "score": 2736,
-        "max_score": 19005
+        "accuracy": 0.1439,
+        "score": 2740,
+        "max_score": 19047
       },
       "direct_pure_rl": {
         "accuracy": 0.3282,
-        "score": 6244,
-        "max_score": 19026
+        "score": 6258,
+        "max_score": 19068
       },
       "direct_sft": {
-        "accuracy": 0.3435,
-        "score": 6536,
-        "max_score": 19026
+        "accuracy": 0.3437,
+        "score": 6553,
+        "max_score": 19068
       },
       "direct_sft_rl": {
         "accuracy": 0.3495,
-        "score": 6649,
-        "max_score": 19026
+        "score": 6656,
+        "max_score": 19047
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.2472,
-        "score": 4682,
-        "max_score": 18942
+        "accuracy": 0.247,
+        "score": 4689,
+        "max_score": 18984
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.2821,
-        "score": 5367,
-        "max_score": 19026
+        "accuracy": 0.282,
+        "score": 5372,
+        "max_score": 19047
       },
       "multi_step_sft": {
-        "accuracy": 0.3372,
-        "score": 6416,
-        "max_score": 19026
+        "accuracy": 0.3371,
+        "score": 6421,
+        "max_score": 19047
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.2955,
-        "score": 5623,
-        "max_score": 19026
+        "accuracy": 0.2956,
+        "score": 5631,
+        "max_score": 19047
       },
       "chain_inference_scaling": {
         "accuracy": 0.2928,
-        "score": 5547,
-        "max_score": 18942
+        "score": 5564,
+        "max_score": 19005
       },
       "chain_pure_rl": {
-        "accuracy": 0.2815,
-        "score": 5349,
-        "max_score": 19005
+        "accuracy": 0.2813,
+        "score": 5357,
+        "max_score": 19047
       },
       "chain_sft": {
         "accuracy": 0.3369,
-        "score": 6409,
-        "max_score": 19026
+        "score": 6416,
+        "max_score": 19047
       },
       "chain_sft_rl": {
-        "accuracy": 0.3235,
-        "score": 6154,
-        "max_score": 19026
+        "accuracy": 0.3236,
+        "score": 6163,
+        "max_score": 19047
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3028,
-        "score": 5729,
-        "max_score": 18921
+        "accuracy": 0.3029,
+        "score": 5750,
+        "max_score": 18984
       },
       "tree_pure_rl": {
-        "accuracy": 0.3125,
-        "score": 5939,
-        "max_score": 19005
+        "accuracy": 0.3123,
+        "score": 5949,
+        "max_score": 19047
       },
       "tree_sft": {
-        "accuracy": 0.3391,
-        "score": 6444,
-        "max_score": 19005
+        "accuracy": 0.339,
+        "score": 6450,
+        "max_score": 19026
       },
       "tree_sft_rl": {
-        "accuracy": 0.3324,
-        "score": 6317,
-        "max_score": 19005
+        "accuracy": 0.3326,
+        "score": 6328,
+        "max_score": 19026
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.313,
-        "score": 5936,
-        "max_score": 18963
+        "accuracy": 0.3129,
+        "score": 5941,
+        "max_score": 18984
       },
       "continuous_pure_rl": {
         "accuracy": 0.2309,
-        "score": 4388,
-        "max_score": 19005
+        "score": 4393,
+        "max_score": 19026
       },
       "continuous_sft": {
         "accuracy": 0.2647,
-        "score": 5030,
-        "max_score": 19005
+        "score": 5041,
+        "max_score": 19047
       },
       "continuous_sft_rl": {
-        "accuracy": 0.2249,
+        "accuracy": 0.2246,
         "score": 4274,
-        "max_score": 19005
+        "max_score": 19026
       }
     }
   }
