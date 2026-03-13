@@ -329,109 +329,109 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 16476,
+    "total_tasks": 16531,
     "failed": 0,
-    "elapsed_seconds": 18347.0,
+    "elapsed_seconds": 18396.0,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1455,
+        "accuracy": 0.1449,
         "score": 2517,
-        "max_score": 17304
+        "max_score": 17367
       },
       "direct_pure_rl": {
-        "accuracy": 0.3284,
-        "score": 5689,
-        "max_score": 17325
+        "accuracy": 0.3289,
+        "score": 5719,
+        "max_score": 17388
       },
       "direct_sft": {
         "accuracy": 0.3424,
-        "score": 5932,
-        "max_score": 17325
+        "score": 5954,
+        "max_score": 17388
       },
       "direct_sft_rl": {
-        "accuracy": 0.3489,
-        "score": 6044,
-        "max_score": 17325
+        "accuracy": 0.349,
+        "score": 6068,
+        "max_score": 17388
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.2474,
-        "score": 4270,
-        "max_score": 17262
+        "accuracy": 0.2469,
+        "score": 4277,
+        "max_score": 17325
       },
       "multi_step_pure_rl": {
         "accuracy": 0.2812,
-        "score": 4872,
-        "max_score": 17325
+        "score": 4890,
+        "max_score": 17388
       },
       "multi_step_sft": {
-        "accuracy": 0.3367,
-        "score": 5827,
-        "max_score": 17304
+        "accuracy": 0.3365,
+        "score": 5844,
+        "max_score": 17367
       },
       "multi_step_sft_rl": {
         "accuracy": 0.2942,
-        "score": 5090,
-        "max_score": 17304
+        "score": 5109,
+        "max_score": 17367
       },
       "chain_inference_scaling": {
-        "accuracy": 0.2906,
-        "score": 5017,
-        "max_score": 17262
+        "accuracy": 0.2908,
+        "score": 5032,
+        "max_score": 17304
       },
       "chain_pure_rl": {
-        "accuracy": 0.2798,
-        "score": 4842,
-        "max_score": 17304
+        "accuracy": 0.2797,
+        "score": 4858,
+        "max_score": 17367
       },
       "chain_sft": {
         "accuracy": 0.3367,
-        "score": 5826,
-        "max_score": 17304
+        "score": 5848,
+        "max_score": 17367
       },
       "chain_sft_rl": {
         "accuracy": 0.3234,
-        "score": 5596,
-        "max_score": 17304
+        "score": 5616,
+        "max_score": 17367
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3008,
-        "score": 5192,
-        "max_score": 17262
+        "accuracy": 0.3007,
+        "score": 5203,
+        "max_score": 17304
       },
       "tree_pure_rl": {
-        "accuracy": 0.3127,
-        "score": 5411,
-        "max_score": 17304
+        "accuracy": 0.3129,
+        "score": 5435,
+        "max_score": 17367
       },
       "tree_sft": {
-        "accuracy": 0.3363,
-        "score": 5819,
-        "max_score": 17304
+        "accuracy": 0.3362,
+        "score": 5839,
+        "max_score": 17367
       },
       "tree_sft_rl": {
         "accuracy": 0.3321,
-        "score": 5746,
-        "max_score": 17304
+        "score": 5767,
+        "max_score": 17367
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3121,
-        "score": 5387,
-        "max_score": 17262
+        "accuracy": 0.3118,
+        "score": 5396,
+        "max_score": 17304
       },
       "continuous_pure_rl": {
-        "accuracy": 0.2304,
-        "score": 3986,
-        "max_score": 17304
+        "accuracy": 0.231,
+        "score": 4007,
+        "max_score": 17346
       },
       "continuous_sft": {
-        "accuracy": 0.2653,
-        "score": 4590,
-        "max_score": 17304
+        "accuracy": 0.2657,
+        "score": 4614,
+        "max_score": 17367
       },
       "continuous_sft_rl": {
-        "accuracy": 0.2245,
-        "score": 3884,
-        "max_score": 17304
+        "accuracy": 0.2247,
+        "score": 3898,
+        "max_score": 17346
       }
     }
   }
