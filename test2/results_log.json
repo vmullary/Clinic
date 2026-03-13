@@ -329,14 +329,14 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 7991,
+    "total_tasks": 7998,
     "failed": 0,
-    "elapsed_seconds": 9583.6,
+    "elapsed_seconds": 9588.5,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1425,
+        "accuracy": 0.1421,
         "score": 1197,
-        "max_score": 8400
+        "max_score": 8421
       },
       "direct_pure_rl": {
         "accuracy": 0.3349,
@@ -355,8 +355,8 @@
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.257,
-        "score": 2148,
-        "max_score": 8358
+        "score": 2153,
+        "max_score": 8379
       },
       "multi_step_pure_rl": {
         "accuracy": 0.2873,
@@ -390,8 +390,8 @@
       },
       "chain_sft_rl": {
         "accuracy": 0.3299,
-        "score": 2771,
-        "max_score": 8400
+        "score": 2778,
+        "max_score": 8421
       },
       "tree_inference_scaling": {
         "accuracy": 0.3014,
@@ -399,9 +399,9 @@
         "max_score": 8358
       },
       "tree_pure_rl": {
-        "accuracy": 0.3132,
-        "score": 2624,
-        "max_score": 8379
+        "accuracy": 0.3137,
+        "score": 2635,
+        "max_score": 8400
       },
       "tree_sft": {
         "accuracy": 0.3449,
@@ -414,19 +414,19 @@
         "max_score": 8400
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3071,
-        "score": 2560,
-        "max_score": 8337
+        "accuracy": 0.307,
+        "score": 2566,
+        "max_score": 8358
       },
       "continuous_pure_rl": {
-        "accuracy": 0.2251,
+        "accuracy": 0.2245,
         "score": 1886,
-        "max_score": 8379
+        "max_score": 8400
       },
       "continuous_sft": {
-        "accuracy": 0.2708,
-        "score": 2269,
-        "max_score": 8379
+        "accuracy": 0.2704,
+        "score": 2271,
+        "max_score": 8400
       },
       "continuous_sft_rl": {
         "accuracy": 0.2286,
