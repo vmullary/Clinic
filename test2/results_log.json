@@ -329,14 +329,14 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 10995,
+    "total_tasks": 11003,
     "failed": 0,
-    "elapsed_seconds": 12648.4,
+    "elapsed_seconds": 12656.4,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1474,
+        "accuracy": 0.1471,
         "score": 1702,
-        "max_score": 11550
+        "max_score": 11571
       },
       "direct_pure_rl": {
         "accuracy": 0.3317,
@@ -374,24 +374,24 @@
         "max_score": 11571
       },
       "chain_inference_scaling": {
-        "accuracy": 0.2932,
-        "score": 3368,
-        "max_score": 11487
+        "accuracy": 0.293,
+        "score": 3372,
+        "max_score": 11508
       },
       "chain_pure_rl": {
-        "accuracy": 0.2761,
-        "score": 3189,
-        "max_score": 11550
+        "accuracy": 0.2763,
+        "score": 3197,
+        "max_score": 11571
       },
       "chain_sft": {
-        "accuracy": 0.3351,
-        "score": 3870,
-        "max_score": 11550
+        "accuracy": 0.3352,
+        "score": 3879,
+        "max_score": 11571
       },
       "chain_sft_rl": {
-        "accuracy": 0.3273,
-        "score": 3780,
-        "max_score": 11550
+        "accuracy": 0.3275,
+        "score": 3789,
+        "max_score": 11571
       },
       "tree_inference_scaling": {
         "accuracy": 0.3004,
@@ -400,18 +400,18 @@
       },
       "tree_pure_rl": {
         "accuracy": 0.313,
-        "score": 3615,
-        "max_score": 11550
+        "score": 3622,
+        "max_score": 11571
       },
       "tree_sft": {
-        "accuracy": 0.3448,
-        "score": 3982,
-        "max_score": 11550
+        "accuracy": 0.3451,
+        "score": 3993,
+        "max_score": 11571
       },
       "tree_sft_rl": {
-        "accuracy": 0.3339,
-        "score": 3857,
-        "max_score": 11550
+        "accuracy": 0.3345,
+        "score": 3870,
+        "max_score": 11571
       },
       "continuous_inference_scaling": {
         "accuracy": 0.3014,
