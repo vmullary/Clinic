@@ -329,89 +329,89 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 17946,
+    "total_tasks": 17999,
     "failed": 0,
-    "elapsed_seconds": 20116.4,
+    "elapsed_seconds": 20174.6,
     "scores": {
       "direct_inference_scaling": {
         "accuracy": 0.1443,
-        "score": 2721,
-        "max_score": 18858
+        "score": 2731,
+        "max_score": 18921
       },
       "direct_pure_rl": {
-        "accuracy": 0.3282,
-        "score": 6196,
-        "max_score": 18879
+        "accuracy": 0.3285,
+        "score": 6215,
+        "max_score": 18921
       },
       "direct_sft": {
         "accuracy": 0.3433,
-        "score": 6481,
-        "max_score": 18879
+        "score": 6496,
+        "max_score": 18921
       },
       "direct_sft_rl": {
-        "accuracy": 0.3494,
-        "score": 6589,
-        "max_score": 18858
+        "accuracy": 0.3498,
+        "score": 6618,
+        "max_score": 18921
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.2468,
-        "score": 4634,
-        "max_score": 18774
+        "accuracy": 0.2473,
+        "score": 4668,
+        "max_score": 18879
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.2822,
-        "score": 5315,
-        "max_score": 18837
+        "accuracy": 0.2824,
+        "score": 5344,
+        "max_score": 18921
       },
       "multi_step_sft": {
-        "accuracy": 0.3372,
-        "score": 6359,
-        "max_score": 18858
+        "accuracy": 0.3375,
+        "score": 6385,
+        "max_score": 18921
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.2954,
-        "score": 5564,
-        "max_score": 18837
+        "accuracy": 0.2957,
+        "score": 5594,
+        "max_score": 18921
       },
       "chain_inference_scaling": {
-        "accuracy": 0.293,
-        "score": 5513,
-        "max_score": 18816
+        "accuracy": 0.2929,
+        "score": 5517,
+        "max_score": 18837
       },
       "chain_pure_rl": {
-        "accuracy": 0.281,
-        "score": 5300,
-        "max_score": 18858
+        "accuracy": 0.2811,
+        "score": 5306,
+        "max_score": 18879
       },
       "chain_sft": {
         "accuracy": 0.3366,
-        "score": 6347,
-        "max_score": 18858
+        "score": 6369,
+        "max_score": 18921
       },
       "chain_sft_rl": {
-        "accuracy": 0.3231,
-        "score": 6093,
-        "max_score": 18858
+        "accuracy": 0.3234,
+        "score": 6119,
+        "max_score": 18921
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3019,
-        "score": 5675,
-        "max_score": 18795
+        "accuracy": 0.3029,
+        "score": 5718,
+        "max_score": 18879
       },
       "tree_pure_rl": {
-        "accuracy": 0.3132,
-        "score": 5906,
-        "max_score": 18858
+        "accuracy": 0.3129,
+        "score": 5913,
+        "max_score": 18900
       },
       "tree_sft": {
         "accuracy": 0.3387,
-        "score": 6388,
-        "max_score": 18858
+        "score": 6402,
+        "max_score": 18900
       },
       "tree_sft_rl": {
-        "accuracy": 0.3321,
-        "score": 6263,
-        "max_score": 18858
+        "accuracy": 0.3325,
+        "score": 6284,
+        "max_score": 18900
       },
       "continuous_inference_scaling": {
         "accuracy": 0.3131,
@@ -419,19 +419,19 @@
         "max_score": 18816
       },
       "continuous_pure_rl": {
-        "accuracy": 0.2312,
-        "score": 4356,
-        "max_score": 18837
+        "accuracy": 0.231,
+        "score": 4366,
+        "max_score": 18900
       },
       "continuous_sft": {
-        "accuracy": 0.2652,
-        "score": 4996,
-        "max_score": 18837
+        "accuracy": 0.2654,
+        "score": 5016,
+        "max_score": 18900
       },
       "continuous_sft_rl": {
-        "accuracy": 0.2257,
-        "score": 4251,
-        "max_score": 18837
+        "accuracy": 0.2258,
+        "score": 4268,
+        "max_score": 18900
       }
     }
   }
