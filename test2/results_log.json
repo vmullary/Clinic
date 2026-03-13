@@ -329,69 +329,69 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 4741,
+    "total_tasks": 4768,
     "failed": 0,
-    "elapsed_seconds": 6116.1,
+    "elapsed_seconds": 6154.2,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1387,
+        "accuracy": 0.1381,
         "score": 693,
-        "max_score": 4998
+        "max_score": 5019
       },
       "direct_pure_rl": {
-        "accuracy": 0.3315,
-        "score": 1657,
-        "max_score": 4998
+        "accuracy": 0.3325,
+        "score": 1676,
+        "max_score": 5040
       },
       "direct_sft": {
-        "accuracy": 0.3485,
-        "score": 1742,
-        "max_score": 4998
+        "accuracy": 0.3493,
+        "score": 1753,
+        "max_score": 5019
       },
       "direct_sft_rl": {
-        "accuracy": 0.3573,
-        "score": 1786,
-        "max_score": 4998
+        "accuracy": 0.3581,
+        "score": 1805,
+        "max_score": 5040
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.267,
-        "score": 1312,
-        "max_score": 4914
+        "accuracy": 0.2659,
+        "score": 1329,
+        "max_score": 4998
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.2851,
+        "accuracy": 0.2839,
         "score": 1425,
-        "max_score": 4998
+        "max_score": 5019
       },
       "multi_step_sft": {
-        "accuracy": 0.3381,
-        "score": 1690,
-        "max_score": 4998
+        "accuracy": 0.3389,
+        "score": 1701,
+        "max_score": 5019
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.3011,
-        "score": 1505,
-        "max_score": 4998
+        "accuracy": 0.3021,
+        "score": 1516,
+        "max_score": 5019
       },
       "chain_inference_scaling": {
-        "accuracy": 0.2941,
-        "score": 1445,
-        "max_score": 4914
+        "accuracy": 0.2936,
+        "score": 1449,
+        "max_score": 4935
       },
       "chain_pure_rl": {
-        "accuracy": 0.2737,
-        "score": 1362,
-        "max_score": 4977
+        "accuracy": 0.2732,
+        "score": 1371,
+        "max_score": 5019
       },
       "chain_sft": {
-        "accuracy": 0.3475,
-        "score": 1737,
-        "max_score": 4998
+        "accuracy": 0.3477,
+        "score": 1745,
+        "max_score": 5019
       },
       "chain_sft_rl": {
-        "accuracy": 0.3347,
-        "score": 1673,
-        "max_score": 4998
+        "accuracy": 0.3355,
+        "score": 1684,
+        "max_score": 5019
       },
       "tree_inference_scaling": {
         "accuracy": 0.3008,
@@ -399,39 +399,39 @@
         "max_score": 4956
       },
       "tree_pure_rl": {
-        "accuracy": 0.3132,
-        "score": 1559,
-        "max_score": 4977
-      },
-      "tree_sft": {
-        "accuracy": 0.3431,
-        "score": 1715,
+        "accuracy": 0.3131,
+        "score": 1565,
         "max_score": 4998
       },
+      "tree_sft": {
+        "accuracy": 0.3435,
+        "score": 1724,
+        "max_score": 5019
+      },
       "tree_sft_rl": {
-        "accuracy": 0.3424,
-        "score": 1704,
-        "max_score": 4977
+        "accuracy": 0.3423,
+        "score": 1711,
+        "max_score": 4998
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3119,
-        "score": 1539,
-        "max_score": 4935
+        "accuracy": 0.3114,
+        "score": 1550,
+        "max_score": 4977
       },
       "continuous_pure_rl": {
-        "accuracy": 0.2321,
+        "accuracy": 0.2311,
         "score": 1155,
-        "max_score": 4977
+        "max_score": 4998
       },
       "continuous_sft": {
-        "accuracy": 0.2745,
-        "score": 1366,
-        "max_score": 4977
+        "accuracy": 0.2736,
+        "score": 1373,
+        "max_score": 5019
       },
       "continuous_sft_rl": {
-        "accuracy": 0.2232,
-        "score": 1111,
-        "max_score": 4977
+        "accuracy": 0.2231,
+        "score": 1115,
+        "max_score": 4998
       }
     }
   }
