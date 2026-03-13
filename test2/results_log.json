@@ -329,29 +329,29 @@
   {
     "timestamp": "2026-03-13T04:20:24.149101+00:00",
     "model": "arcee-ai/trinity-large-preview:free",
-    "total_tasks": 11375,
+    "total_tasks": 11407,
     "failed": 0,
-    "elapsed_seconds": 13015.4,
+    "elapsed_seconds": 13050.3,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.1443,
+        "accuracy": 0.144,
         "score": 1727,
-        "max_score": 11970
+        "max_score": 11991
       },
       "direct_pure_rl": {
-        "accuracy": 0.3322,
-        "score": 3977,
-        "max_score": 11970
+        "accuracy": 0.3327,
+        "score": 3996,
+        "max_score": 12012
       },
       "direct_sft": {
         "accuracy": 0.3482,
-        "score": 4168,
-        "max_score": 11970
+        "score": 4183,
+        "max_score": 12012
       },
       "direct_sft_rl": {
         "accuracy": 0.349,
-        "score": 4178,
-        "max_score": 11970
+        "score": 4185,
+        "max_score": 11991
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.2508,
@@ -359,79 +359,79 @@
         "max_score": 11886
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.2845,
-        "score": 3405,
-        "max_score": 11970
+        "accuracy": 0.2844,
+        "score": 3410,
+        "max_score": 11991
       },
       "multi_step_sft": {
-        "accuracy": 0.3371,
-        "score": 4035,
-        "max_score": 11970
+        "accuracy": 0.337,
+        "score": 4041,
+        "max_score": 11991
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.2949,
-        "score": 3530,
-        "max_score": 11970
+        "accuracy": 0.2947,
+        "score": 3534,
+        "max_score": 11991
       },
       "chain_inference_scaling": {
-        "accuracy": 0.2923,
-        "score": 3480,
-        "max_score": 11907
+        "accuracy": 0.2922,
+        "score": 3485,
+        "max_score": 11928
       },
       "chain_pure_rl": {
-        "accuracy": 0.2777,
-        "score": 3318,
-        "max_score": 11949
+        "accuracy": 0.2772,
+        "score": 3324,
+        "max_score": 11991
       },
       "chain_sft": {
-        "accuracy": 0.3352,
-        "score": 4012,
-        "max_score": 11970
+        "accuracy": 0.335,
+        "score": 4017,
+        "max_score": 11991
       },
       "chain_sft_rl": {
-        "accuracy": 0.3275,
-        "score": 3913,
-        "max_score": 11949
+        "accuracy": 0.3272,
+        "score": 3924,
+        "max_score": 11991
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3011,
-        "score": 3579,
-        "max_score": 11886
+        "accuracy": 0.3013,
+        "score": 3594,
+        "max_score": 11928
       },
       "tree_pure_rl": {
-        "accuracy": 0.3137,
-        "score": 3742,
-        "max_score": 11928
+        "accuracy": 0.3138,
+        "score": 3763,
+        "max_score": 11991
       },
       "tree_sft": {
-        "accuracy": 0.3444,
-        "score": 4115,
-        "max_score": 11949
+        "accuracy": 0.3443,
+        "score": 4129,
+        "max_score": 11991
       },
       "tree_sft_rl": {
-        "accuracy": 0.3348,
-        "score": 4001,
-        "max_score": 11949
+        "accuracy": 0.3349,
+        "score": 4016,
+        "max_score": 11991
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3028,
-        "score": 3606,
-        "max_score": 11907
+        "accuracy": 0.3034,
+        "score": 3625,
+        "max_score": 11949
       },
       "continuous_pure_rl": {
-        "accuracy": 0.228,
-        "score": 2720,
-        "max_score": 11928
+        "accuracy": 0.2277,
+        "score": 2725,
+        "max_score": 11970
       },
       "continuous_sft": {
-        "accuracy": 0.2686,
-        "score": 3210,
-        "max_score": 11949
+        "accuracy": 0.2684,
+        "score": 3213,
+        "max_score": 11970
       },
       "continuous_sft_rl": {
         "accuracy": 0.2206,
-        "score": 2631,
-        "max_score": 11928
+        "score": 2645,
+        "max_score": 11991
       }
     }
   }
