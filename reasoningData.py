@@ -22,6 +22,14 @@ reasoningPolicies = {
     )
 }
 
+class OptimizationMode:
+    NONE = "none"
+    INFERENCE_SCALING = "inference_scaling"
+    PURE_RL = "pure_rl"
+    SFT = "sft"
+    SFT_RL = "sft_rl"
+    DISTILLATION = "distillation"
+
 SFT_DATASET = {}
 
 SFT_DATASET[ReasoningMode.MultiStep] = [
@@ -513,3 +521,261 @@ Final Answer: x = 3 or x = -3.""",
     }
 
 ]
+
+# ============================================================
+# AUTOMATIC LOGIC PUZZLE DATA GENERATOR
+# (SFT + RL datasets for reasoning benchmarks)
+# ============================================================
+
+import random
+
+# ------------------------------------------------------------
+# Entities
+# ------------------------------------------------------------
+
+PEOPLE3 = ["Alice", "Bob", "Charlie"]
+PETS3 = ["anole", "bat", "cat"]
+ROOMS3 = [1,2,3]
+
+PEOPLE4 = ["Alice", "Bob", "Charlie", "Diana"]
+PETS4 = ["anole", "bat", "cat", "dog"]
+ROOMS4 = [1,2,3,4]
+
+# ------------------------------------------------------------
+# Utility
+# ------------------------------------------------------------
+
+def shuffle_pairing(people, pets, rooms):
+
+    p = people.copy()
+    pet = pets.copy()
+
+    random.shuffle(p)
+    random.shuffle(pet)
+
+    solution = {}
+
+    for i in range(len(rooms)):
+        solution[rooms[i]] = {
+            "person": p[i],
+            "pet": pet[i]
+        }
+
+    return solution
+
+
+def solution_to_text(solution):
+
+    lines = []
+
+    for r in sorted(solution.keys()):
+        person = solution[r]["person"]
+        pet = solution[r]["pet"]
+
+        lines.append(f"Room {r}: {person} and {pet}")
+
+    return "\n".join(lines)
+
+
+def build_problem_text(people, pets, rules):
+
+    rule_text = "\n".join([f"{i+1}. {r}" for i,r in enumerate(rules)])
+
+    people_txt = ", ".join(people)
+    pets_txt = ", ".join(pets)
+
+    return f"""
+There are {len(people)} rooms with persons {people_txt}
+and pets {pets_txt}.
+
+Each room contains exactly one person and one pet.
+
+Restrictions:
+{rule_text}
+
+What are the tenants in the rooms?
+"""
+
+
+# ------------------------------------------------------------
+# Rule generation
+# ------------------------------------------------------------
+
+def generate_rules(solution, people, pets):
+
+    rooms = list(solution.keys())
+
+    rules = []
+
+    room = random.choice(rooms)
+
+    person = solution[room]["person"]
+    pet = solution[room]["pet"]
+
+    rules.append(f"{person} @ {pet}")
+
+    other_person = random.choice([p for p in people if p != person])
+
+    rules.append(f"{other_person} !@ {pet}")
+
+    if len(rooms) >= 3:
+
+        p1 = solution[rooms[0]]["person"]
+        p2 = solution[rooms[1]]["person"]
+
+        rules.append(f"{p1} = {p2}")
+
+    if len(rooms) >= 4:
+
+        p3 = solution[rooms[2]]["person"]
+
+        rules.append(f"{p2} <> {p3}")
+
+    return rules
+
+
+# ------------------------------------------------------------
+# SFT example creation
+# ------------------------------------------------------------
+
+def add_sft_examples(question, answer):
+
+    SFT_DATASET[ReasoningMode.Direct].append({
+        "user": question,
+        "assistant": answer
+    })
+
+    SFT_DATASET[ReasoningMode.Chain].append({
+        "user": question,
+        "assistant": f"""Applying the constraints step by step yields a valid configuration.
+
+Final Answer:
+{answer}"""
+    })
+
+    SFT_DATASET[ReasoningMode.MultiStep].append({
+        "user": question,
+        "assistant": f"""Step 1: Apply direct person-pet constraints.
+Step 2: Apply adjacency and ordering constraints.
+Step 3: Eliminate invalid room placements.
+Step 4: Fill remaining rooms consistently.
+
+Final Answer:
+{answer}"""
+    })
+
+    SFT_DATASET[ReasoningMode.Tree].append({
+        "user": question,
+        "assistant": f"""Approach 1: Start from fixed constraints.
+
+Approach 2: Evaluate possible room placements.
+
+Approach 3: Eliminate inconsistent assignments.
+
+Final configuration:
+
+{answer}"""
+    })
+
+    SFT_DATASET.setdefault(ReasoningMode.Critic, [])
+
+    SFT_DATASET[ReasoningMode.Critic].append({
+        "user": question,
+        "assistant": f"""Initial hypothesis:
+
+{answer}
+
+Critique:
+Verify that all constraints are satisfied.
+
+Final Answer:
+{answer}"""
+    })
+
+
+# ------------------------------------------------------------
+# RL dataset creation
+# ------------------------------------------------------------
+
+def add_rl_examples(question, answer):
+
+    shorter = answer.split("\n")[0]
+
+    RL_DATASET.setdefault(ReasoningMode.Direct, [])
+
+    RL_DATASET[ReasoningMode.Direct].append({
+
+        "user": question,
+
+        "responses": [
+            {"text": answer, "reward": 1.0},
+            {"text": shorter, "reward": 0.6},
+            {"text": "Unable to determine.", "reward": 0.0}
+        ],
+
+        "best_index": 0
+    })
+
+    RL_DATASET.setdefault(ReasoningMode.MultiStep, [])
+
+    RL_DATASET[ReasoningMode.MultiStep].append({
+
+        "user": question,
+
+        "responses": [
+            {"text": f"""Step-by-step reasoning leads to:
+
+{answer}""", "reward": 1.0},
+
+            {"text": answer, "reward": 0.6},
+
+            {"text": "No valid solution.", "reward": 0.0}
+        ],
+
+        "best_index": 0
+    })
+
+
+# ------------------------------------------------------------
+# Puzzle generators
+# ------------------------------------------------------------
+
+def generate_puzzles(num_samples, people, pets, rooms):
+
+    for _ in range(num_samples):
+
+        solution = shuffle_pairing(people, pets, rooms)
+
+        rules = generate_rules(solution, people, pets)
+
+        question = build_problem_text(people, pets, rules)
+
+        answer = solution_to_text(solution)
+
+        add_sft_examples(question, answer)
+
+        add_rl_examples(question, answer)
+
+
+# ------------------------------------------------------------
+# Run generators automatically
+# ------------------------------------------------------------
+
+def generate_reasoning_datasets():
+
+    generate_puzzles(
+        num_samples = 300,
+        people = PEOPLE3,
+        pets = PETS3,
+        rooms = ROOMS3
+    )
+
+    generate_puzzles(
+        num_samples = 300,
+        people = PEOPLE4,
+        pets = PETS4,
+        rooms = ROOMS4
+    )
+
+
+generate_reasoning_datasets()
