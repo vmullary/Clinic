@@ -14,12 +14,14 @@ import re
 import sys
 import time
 import json
+import base64
 import argparse
 import logging
 import threading
 import requests
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from requests.exceptions import Timeout, HTTPError, RequestException
 from datasets import load_dataset
 
@@ -32,20 +34,20 @@ def parse_args():
         description="Parallel LLM reasoning evaluation sweep"
     )
     parser.add_argument(
-        "--num_workers", type=int, default=4,
+        "--num_workers", type=int, default=20,
         help="Number of parallel worker threads (default: 4)"
     )
     parser.add_argument(
-        "--max_samples", type=int, default=None,
-        help="Maximum number of dataset samples to evaluate (default: all)"
+        "--max_samples", type=int, default=200,
+        help="Maximum number of dataset samples to evaluate (default: 200)"
     )
     parser.add_argument(
-        "--start_index", type=int, default=101,
-        help="Dataset index to start evaluation from (default: 101)"
+        "--start_index", type=int, default=0,
+        help="Dataset index to start evaluation from (default: 0)"
     )
     parser.add_argument(
         "--output_dir", type=str,
-        default="C:/Users/vwmul/Downloads/Clinic Results",
+        default="C:/Users/vwmul/Downloads/New Results",
         help="Directory to save results files"
     )
     parser.add_argument(
@@ -75,17 +77,27 @@ def setup_logging(level_str: str):
 # =====================================================
 # Configuration
 # =====================================================
+import os
 
-URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_API_KEY = "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"
+URL = "https://game.agaii.org/mllm/v1/chat/completions"
+
 HEADERS = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
 }
-MODEL = "arcee-ai/trinity-large-preview:free"
+MODEL = "Qwen/Qwen3.5-27B-FP8"
 
-TIMEOUT_SECONDS = 300
-MAX_RETRIES = 4
+TIMEOUT_SECONDS = 600
+MAX_RETRIES = 8
+
+# =====================================================
+# GitHub Results Config
+# Set GITHUB_TOKEN env var with a PAT that has repo Contents read+write.
+# =====================================================
+
+GITHUB_TOKEN      = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_REPO       = "vmullary/Clinic"
+GITHUB_BRANCH     = "main"
+GITHUB_RESULTS_PATH = "api_test/results_log.json"
 
 # --- Loop-detection settings ---
 MAX_LOOP_RETRIES = 3
@@ -111,28 +123,7 @@ _file_locks: dict[str, threading.Lock] = defaultdict(threading.Lock)
 # Thread-safe results accumulator
 _results_lock = threading.Lock()
 
-# Use a requests.Session with connection pooling for efficiency
-_http_session: requests.Session | None = None
-_session_lock = threading.Lock()
 
-
-def _get_session() -> requests.Session:
-    """Lazy-initialise a shared, connection-pooled requests.Session."""
-    global _http_session
-    if _http_session is None:
-        with _session_lock:
-            if _http_session is None:  # double-check after acquiring lock
-                s = requests.Session()
-                s.headers.update(HEADERS)
-                adapter = requests.adapters.HTTPAdapter(
-                    pool_connections=32,
-                    pool_maxsize=32,
-                    max_retries=0  # we handle retries ourselves
-                )
-                s.mount("https://", adapter)
-                s.mount("http://", adapter)
-                _http_session = s
-    return _http_session
 
 
 def _rate_limited_wait():
@@ -241,30 +232,37 @@ def get_high_reward_examples(reasoningMode, threshold=0.8):
 # =====================================================
 
 def buildMessages(reasoningMode, userInput, memory=None, use_sft=False, use_rl=False):
-    messages = [{
-        "role": "system",
-        "content": reasoningPolicies[reasoningMode]
-    }]
+    # -- Build a single consolidated system prompt --
+    system_parts = [reasoningPolicies[reasoningMode]]
 
     if use_sft and reasoningMode in SFT_DATASET:
-        messages.append({
-            "role": "system",
-            "content": "Here are some examples of how to respond:"
-        })
-        messages.extend(get_sft_examples(reasoningMode))
+        system_parts.append("Here are some examples of how to respond:")
 
     if use_rl and reasoningMode in RL_DATASET:
         highReward = get_high_reward_examples(reasoningMode)
         if highReward:
-            messages.append({
-                "role": "system",
-                "content": "Here are examples of high-quality responses:"
-            })
-        messages.extend(highReward)
+            system_parts.append("Here are examples of high-quality responses:")
 
+    messages = [{
+        "role": "system",
+        "content": "\n\n".join(system_parts)
+    }]
+
+    # -- Append SFT few-shot examples (user/assistant pairs only) --
+    if use_sft and reasoningMode in SFT_DATASET:
+        messages.extend(get_sft_examples(reasoningMode))
+
+    # -- Append high-reward RL examples (assistant turns only) --
+    if use_rl and reasoningMode in RL_DATASET:
+        highReward = get_high_reward_examples(reasoningMode)
+        if highReward:
+            messages.extend(highReward)
+
+    # -- Add conversation memory (for COCONUT) --
     if memory:
         messages.extend(memory)
 
+    # -- Add the actual user query --
     messages.append({
         "role": "user",
         "content": userInput
@@ -280,20 +278,22 @@ def buildMessages(reasoningMode, userInput, memory=None, use_sft=False, use_rl=F
 def detect_output_loop(text):
     """
     Returns (is_looping: bool, reason: str).
-    Three independent heuristics — any one triggers a re-run.
+
+    Designed to catch genuine repetition loops while allowing
+    legitimately long multi-step reasoning to pass through.
+    Length alone NEVER triggers a loop — only repetition evidence does.
     """
     if not text or not text.strip():
         return False, ""
 
-    # ----- Heuristic 1: Excessive length -----
-    if len(text) > MAX_OUTPUT_LENGTH:
-        return True, f"Output too long ({len(text)} chars > {MAX_OUTPUT_LENGTH} limit)"
+    text_len = len(text)
 
-    # ----- Heuristic 2: Sliding-window n-gram repetition -----
+    # ----- Heuristic 1: Sliding-window n-gram repetition -----
     window = REPETITION_WINDOW
-    if len(text) >= window * 2:
+    dup_ratio = 0.0
+    if text_len >= window * 3:
         chunks = []
-        for start in range(0, len(text) - window + 1, window):
+        for start in range(0, text_len - window + 1, window):
             chunks.append(text[start:start + window])
 
         if chunks:
@@ -303,25 +303,33 @@ def detect_output_loop(text):
                 if chunk in seen:
                     duplicates += 1
                 seen.add(chunk)
-
             dup_ratio = duplicates / len(chunks)
+
             if dup_ratio >= REPETITION_THRESHOLD:
                 return True, (
                     f"Repetition loop detected: {dup_ratio:.0%} of "
                     f"{len(chunks)} windows are duplicates"
                 )
 
-    # ----- Heuristic 3: Stalled-phrase detector -----
+    # ----- Heuristic 2: Stalled-phrase detector -----
     phrase_len = STALLED_PHRASE_LEN
-    if len(text) >= phrase_len * 4:
-        mid = len(text) // 2
+    if text_len >= phrase_len * 6:
+        mid = text_len // 2
         sample_phrase = text[mid : mid + phrase_len]
         count = text.count(sample_phrase)
-        if count > 5:
+        threshold = STALLED_PHRASE_BASE_COUNT + (text_len // 2000)
+        if count > threshold:
             return True, (
                 f"Stalled phrase detected: \"{sample_phrase[:40]}...\" "
-                f"appears {count} times"
+                f"appears {count} times (threshold: {threshold})"
             )
+
+    # ----- Heuristic 3: Hard ceiling + repetition combo -----
+    if text_len > HARD_LENGTH_CEILING and dup_ratio > 0.15:
+        return True, (
+            f"Output exceeds hard ceiling ({text_len} chars) with "
+            f"{dup_ratio:.0%} window duplication"
+        )
 
     return False, ""
 
@@ -333,26 +341,31 @@ def detect_output_loop(text):
 def _make_api_call(messages):
     """
     Handles the raw HTTP request with timeout, retry, and back-off.
+    Uses a plain requests.post per attempt (no shared session) to match
+    the reference snippet exactly.
     Returns the reply text, or None if all attempts fail.
-    Thread-safe — uses shared session + global rate limiter.
     """
-    session = _get_session()
-
     for attempt in range(MAX_RETRIES):
         try:
             _rate_limited_wait()
 
-            response = session.post(
+            response = requests.post(
                 URL,
                 json={
                     "model": MODEL,
-                    "messages": messages
+                    "messages": messages,
+                    "max_tokens": 512,
+                    "temperature": 0.7
                 },
                 timeout=TIMEOUT_SECONDS
             )
 
             response.raise_for_status()
-            reply = response.json()["choices"][0]["message"]["content"]
+            msg = response.json()["choices"][0]["message"]
+            # This model returns content=null with the reply in reasoning_content
+            reply = msg.get("content") or msg.get("reasoning_content") or ""
+            if not reply:
+                logging.warning(f"[Empty reply] Response had no content or reasoning_content")
             return reply
 
         except Timeout:
@@ -360,20 +373,25 @@ def _make_api_call(messages):
 
         except HTTPError as e:
             status = getattr(response, 'status_code', None)
-            if status == 504:
-                logging.warning(f"[504 Gateway Timeout] Attempt {attempt+1}/{MAX_RETRIES}")
-            elif status == 429:
-                logging.warning(f"[429 Rate Limit] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping...")
+            body = ""
+            try:
+                body = response.text[:500]
+            except Exception:
+                pass
+            if status == 429:
+                logging.warning(f"[429 Rate Limit] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping 5s...")
                 time.sleep(5)
-            elif status in [520, 524, 529]:
-                logging.warning(f"[Cloudflare Error {status}] Attempt {attempt+1}/{MAX_RETRIES}")
+            elif status in [500, 502, 503, 504]:
+                wait_time = max(5, min(60, 2 ** attempt * 5))
+                logging.warning(f"[{status} Server Error] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping {wait_time}s...")
+                time.sleep(wait_time)
             else:
-                logging.error(f"[HTTP Error] {e}")
-                break
+                logging.warning(
+                    f"[HTTP {status}] Attempt {attempt+1}/{MAX_RETRIES} — {e} | body: {body}"
+                )
 
         except RequestException as e:
-            logging.error(f"[Request Failed] {e}")
-            break
+            logging.warning(f"[Request Failed] Attempt {attempt+1}/{MAX_RETRIES} — {e}")
 
         time.sleep(2 ** attempt)
 
@@ -429,7 +447,7 @@ def base_call(reasoningMode, userInput, use_sft=False, use_rl=False,
         f"[LOOP FALLBACK] All {MAX_LOOP_RETRIES} re-runs failed. "
         f"Returning truncated output."
     )
-    return (reply or "")[:MAX_OUTPUT_LENGTH]
+    return (reply or "")[:TRUNCATE_LENGTH]
 
 
 # =====================================================
@@ -658,6 +676,14 @@ def _run_single_task(task):
     output_dir = task["output_dir"]
 
     combo_name = f"{r_mode}_{o_mode}"
+
+    # Induce an artificial staggered startup delay based on task index to prevent a Thundering Herd
+    global_task_index = task.get("global_task_index", 0)
+    if global_task_index < 20: # Only stagger the very first batch of workers 
+        # e.g Worker 0 sleeps 0s, Worker 4 sleeps 4.0s
+        startup_delay = global_task_index * 1.0 
+        time.sleep(startup_delay)
+
     logging.info(f"[{idx+1}/{total}] Running: {combo_name}")
 
     try:
@@ -670,6 +696,8 @@ def _run_single_task(task):
         prediction = f"[ERROR] {e}"
         sc, msc = 0, len(persons) * 2 + len(persons)  # worst case
 
+    print(prediction)
+    return
     # Write per-question result (thread-safe)
     filepath = os.path.join(output_dir, f"question{idx+1}_sweep_results.txt")
     block = (
@@ -694,6 +722,99 @@ def _run_single_task(task):
 # Main Evaluation — Parallel
 # =====================================================
 
+# =====================================================
+# GitHub Results Uploader
+# =====================================================
+
+def push_results_to_github(results: dict, elapsed: float, failed: int, total_tasks: int, run_timestamp: str):
+    """
+    Append or update this run's summary to results_log.json on GitHub.
+    Uses run_timestamp to update the ongoing run rather than duplicating it.
+    """
+    if not GITHUB_TOKEN:
+        logging.warning("[GitHub] GITHUB_TOKEN not set - skipping upload.")
+        return
+    if GITHUB_REPO == "YOUR_USERNAME/YOUR_REPO":
+        logging.warning("[GitHub] GITHUB_REPO not configured - skipping upload.")
+        return
+
+    api_url = (
+        f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_RESULTS_PATH}"
+    )
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+    }
+
+    # 1. Fetch existing file (to get SHA for update, and current entries)
+    get_resp = requests.get(api_url, headers=headers)
+    if get_resp.status_code == 200:
+        file_info = get_resp.json()
+        sha = file_info["sha"]
+        decoded = base64.b64decode(file_info["content"]).decode().strip()
+
+        try:
+            existing = json.loads(decoded)
+        except json.JSONDecodeError:
+            print("WARNING: Existing results file is not valid JSON. Resetting it.")
+            existing = []
+    elif get_resp.status_code == 404:
+        sha = None
+        existing = []  # first run - create the file
+    else:
+        logging.error(f"[GitHub] Failed to fetch {GITHUB_RESULTS_PATH}: {get_resp.status_code} {get_resp.text}")
+        return
+
+    # 2. Build the new entry for this run
+    new_entry = {
+        "timestamp": run_timestamp,
+        "model": MODEL,
+        "total_tasks": total_tasks,
+        "failed": failed,
+        "elapsed_seconds": round(elapsed, 1),
+        "scores": {
+            k: {
+                "accuracy": round(v["score"] / v["max_score"], 4) if v["max_score"] > 0 else 0.0,
+                "score": v["score"],
+                "max_score": v["max_score"],
+            }
+            for k, v in results.items()
+        },
+    }
+    
+    # 3. Append or replace the ongoing run
+    replaced = False
+    for i, entry in enumerate(existing):
+        if entry.get("timestamp") == run_timestamp:
+            existing[i] = new_entry
+            replaced = True
+            break
+            
+    if not replaced:
+        existing.append(new_entry)
+
+    # 3. Encode and push
+    encoded = base64.b64encode(json.dumps(existing, indent=2).encode()).decode()
+    commit_msg = (
+        f"results: {new_entry['timestamp'][:10]} | "
+        f"{total_tasks} tasks | model={MODEL}"
+    )
+    payload = {
+        "message": commit_msg,
+        "content": encoded,
+        "branch": GITHUB_BRANCH,
+    }
+    if sha:
+        payload["sha"] = sha  # required when updating an existing file
+
+    put_resp = requests.put(api_url, headers=headers, json=payload)
+    if put_resp.status_code in (200, 201):
+        html_url = put_resp.json().get("content", {}).get("html_url", "")
+        logging.info(f"[GitHub] results_log.json pushed successfully -> {html_url}")
+    else:
+        logging.error(f"[GitHub] Push failed: {put_resp.status_code} {put_resp.text}")
+
+
 def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir):
     """Run the full evaluation sweep in parallel."""
     ds = load_dataset("emunah/deductive_logical_reasoning-room_assignment")
@@ -715,9 +836,17 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
         # OptimizationMode.DISTILLATION
     ]
 
+    run_timestamp = datetime.now(timezone.utc).isoformat()
     total = len(ds["train"])
-    if max_samples:
-        total = min(total, max_samples)
+    
+    # Determine the actual list of indices we are going to process
+    indices_to_process = []
+    for i in range(total):
+        if i < start_index:
+            continue
+        indices_to_process.append(i)
+        if max_samples and len(indices_to_process) >= max_samples:
+            break
 
     # Initialise results accumulator
     results = {}
@@ -726,12 +855,20 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
             combo = f"{r}_{o}"
             results[combo] = {"score": 0, "max_score": 0}
 
-    # ---- Build work queue ----
-    tasks = []
-    for i in range(total):
-        if i < start_index:
-            continue
-
+    total_questions = len(indices_to_process)
+    total_tasks = total_questions * len(all_reasoning_modes) * len(all_optimization_modes)
+    
+    # Setup sensible fallbacks if empty
+    summary_text = ""
+    summary_path = os.path.join(output_dir, "sweep_results.txt")
+    
+    if total_tasks == 0:
+        logging.warning("No questions match the start_index and max_samples filters.")
+        return
+    
+    # ---- Generate All Tasks ----
+    all_tasks = []
+    for i in indices_to_process:
         sample = ds["train"][i]
         full_prompt = sample["prompt"] + "\n\n" + sample["question"]
         ground_truth = sample["completion"]
@@ -750,7 +887,7 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
 
         for r_mode in all_reasoning_modes:
             for o_mode in all_optimization_modes:
-                tasks.append({
+                all_tasks.append({
                     "index": i,
                     "r_mode": r_mode,
                     "o_mode": o_mode,
@@ -761,21 +898,21 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
                     "gt_pet_room": gt_pet_room,
                     "total": total,
                     "output_dir": output_dir,
+                    "global_task_index": len(all_tasks),
                 })
 
-    total_tasks = len(tasks)
-    logging.info(
-        f"Starting evaluation: {total_tasks} tasks across {num_workers} workers"
-    )
-    logging.info(
-        f"  Questions: {start_index}–{total-1}  |  "
-        f"Modes: {len(all_reasoning_modes)}R × {len(all_optimization_modes)}O"
-    )
+    # Track completion per question
+    tasks_per_question = len(all_reasoning_modes) * len(all_optimization_modes)
+    question_completions = {i: 0 for i in indices_to_process}
 
-    # ---- Execute in parallel ----
-    completed = 0
-    failed = 0
+    # ---- Execute All Tasks ----
+    completed_global = 0
+    failed_global = 0
     start_time = time.monotonic()
+
+    logging.info(
+        f"Starting evaluation: {total_tasks} tasks across {num_workers} workers (Continuous Queue)"
+    )
 
     with ThreadPoolExecutor(
         max_workers=num_workers,
@@ -783,11 +920,12 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
     ) as executor:
         future_to_task = {
             executor.submit(_run_single_task, task): task
-            for task in tasks
+            for task in all_tasks
         }
 
         for future in as_completed(future_to_task):
-            completed += 1
+            completed_global += 1
+            task = future_to_task[future]
             try:
                 result = future.result()
                 combo = result["combo_name"]
@@ -797,51 +935,44 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
                     results[combo]["max_score"] += result["max_score"]
 
             except Exception as e:
-                failed += 1
-                task = future_to_task[future]
+                failed_global += 1
                 logging.error(
                     f"Task [{task['index']+1}] "
                     f"{task['r_mode']}_{task['o_mode']} raised: {e}"
                 )
 
-            # Progress update every 10 tasks
-            if completed % 10 == 0 or completed == total_tasks:
-                elapsed = time.monotonic() - start_time
-                rate = completed / elapsed if elapsed > 0 else 0
-                eta = (total_tasks - completed) / rate if rate > 0 else 0
-                logging.info(
-                    f"Progress: {completed}/{total_tasks} "
-                    f"({completed/total_tasks:.0%}) | "
-                    f"Failed: {failed} | "
-                    f"Rate: {rate:.1f} tasks/s | "
-                    f"ETA: {eta:.0f}s"
-                )
+            # Save live local summary every time a single combination finishes
+            elapsed_so_far = time.monotonic() - start_time
+            summary_lines = [
+                "\n========================================",
+                "CURRENT SUMMARY (Live)",
+                "========================================",
+                f"Total tasks: {completed_global}/{total_tasks}  |  Failed: {failed_global}  |  "
+                f"Time: {elapsed_so_far:.1f}s",
+                "----------------------------------------",
+            ]
+            for k, v in results.items():
+                acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
+                summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
 
-    # ---- Save summary ----
-    elapsed_total = time.monotonic() - start_time
+            summary_text = "\n".join(summary_lines) + "\n"
+            summary_path = os.path.join(output_dir, "sweep_results.txt")
+            _safe_write(summary_path, summary_text)
 
-    summary_lines = [
-        "\n========================================",
-        "FINAL SUMMARY",
-        "========================================",
-        f"Total tasks: {total_tasks}  |  Failed: {failed}  |  "
-        f"Time: {elapsed_total:.1f}s",
-        "----------------------------------------",
-    ]
-    for k, v in results.items():
-        acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
-        summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
+            # Mark this question's combination as complete
+            q_index = task["index"]
+            question_completions[q_index] += 1
 
-    summary_text = "\n".join(summary_lines) + "\n"
-    summary_path = os.path.join(output_dir, "sweep_results.txt")
-    _safe_write(summary_path, summary_text)
+            # If this question is fully complete across all combinations, push to GitHub
+            if question_completions[q_index] == tasks_per_question:
+                logging.info(f"Question {q_index+1} complete. Pushing live results to GitHub...")
+                push_results_to_github(results, elapsed_so_far, failed_global, completed_global, run_timestamp)
 
     print("\n" + "=" * 50)
     print("FINAL RESULTS SUMMARY")
     print("=" * 50)
     print(summary_text)
     print(f"Results saved to: {summary_path}")
-
 
 # =====================================================
 # Entry Point
