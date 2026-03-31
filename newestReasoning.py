@@ -10,22 +10,16 @@ Usage:
 """
 
 import os
-import sys
-
-# Ensure the script directory is in the search path for local modules
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 import re
+import sys
 import time
 import json
-import base64
 import argparse
 import logging
 import threading
 import requests
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
 from requests.exceptions import Timeout, HTTPError, RequestException
 from datasets import load_dataset
 
@@ -38,8 +32,8 @@ def parse_args():
         description="Parallel LLM reasoning evaluation sweep"
     )
     parser.add_argument(
-        "--num_workers", type=int, default=2,
-        help="Number of parallel worker threads (default: 2)"
+        "--num_workers", type=int, default=4,
+        help="Number of parallel worker threads (default: 4)"
     )
     parser.add_argument(
         "--max_samples", type=int, default=None,
@@ -63,10 +57,7 @@ def parse_args():
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Logging verbosity (default: INFO)"
     )
-    parser.add_argument(
-        "--thinking_budget", type=int, default=512,
-        help="Thinking tokens budget for the model (default: 512)"
-    )
+    #max out put tokens, 8k
     parser.add_argument(
         "--max_output_tokens", type=int, default=10240,
         help="Maximum number of output tokens (default: 10240)"
@@ -98,18 +89,8 @@ HEADERS = {
 }
 MODEL = "Qwen/Qwen3.5-27B-FP8"
 
-TIMEOUT_SECONDS = 600
-MAX_RETRIES = 8
-
-# =====================================================
-# GitHub Results Config
-# Set GITHUB_TOKEN env var with a PAT that has repo Contents read+write.
-# =====================================================
-
-GITHUB_TOKEN      = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO       = "vmullary/Clinic"
-GITHUB_BRANCH     = "main"
-GITHUB_RESULTS_PATH = "api_test/results_log.json"
+TIMEOUT_SECONDS = 300
+MAX_RETRIES = 4
 
 # --- Loop-detection settings ---
 MAX_LOOP_RETRIES = 3
@@ -161,13 +142,46 @@ def _safe_write(filepath: str, content: str, mode: str = "a"):
 # =====================================================
 # Reasoning Modes
 # =====================================================
-from reasoningData import (
-    ReasoningMode, 
-    reasoningPolicies, 
-    SFT_DATASET, 
-    RL_DATASET, 
-    OptimizationMode
-)
+
+class ReasoningMode:
+    Direct = "direct"
+    MultiStep = "multi_step"
+    Chain = "chain"
+    Tree = "tree"
+    COCONUT = "continuous"
+    Critic = "critic"
+
+reasoningPolicies = {
+    ReasoningMode.Direct: "Answer directly with no explanation.",
+    ReasoningMode.MultiStep: "Solve the problem step by step and explain each step.",
+    ReasoningMode.Chain: "Provide a brief reasoning chain, then give the final answer.",
+    ReasoningMode.Tree: (
+        "Consider multiple solution approaches. "
+        "Briefly evaluate each and choose the best one."
+    ),
+    ReasoningMode.COCONUT: (
+        "Maintain consistent reasoning across turns and build on previous steps."
+    ),
+    ReasoningMode.Critic: (
+        "Propose a solution, critique it, then refine the final answer."
+    )
+}
+
+from reasoningData import SFT_DATASET
+from reasoningData import RL_DATASET
+
+# =====================================================
+# Optimization Modes
+# =====================================================
+
+class OptimizationMode:
+    NONE = "none"
+    INFERENCE_SCALING = "inference_scaling"
+    PURE_RL = "pure_rl"
+    SFT = "sft"
+    SFT_RL = "sft_rl"
+    DISTILLATION = "distillation"
+
 
 def get_sft_examples(reasoningMode):
     examples = SFT_DATASET.get(reasoningMode, [])
@@ -199,10 +213,6 @@ def get_high_reward_examples(reasoningMode, threshold=0.8):
     for entry in entries:
         for idx, response in enumerate(entry["responses"]):
             if response["reward"] >= threshold:
-                examples.append({
-                    "role": "user",
-                    "content": entry["user"]
-                })
                 examples.append({
                     "role": "assistant",
                     "content": response["text"]
@@ -338,13 +348,7 @@ def _make_api_call(messages):
                     "model": MODEL,
                     "messages": messages,
                     "max_tokens": args.max_output_tokens,
-                    "temperature": 0.5,
-                    "extra_body": {
-                        "custom_logit_processor": "Qwen35ThinkingBudgetLogitProcessor",  # or the .to_str() version if needed
-                        "custom_params": {
-                            "thinking_budget": args.thinking_budget,        # ← This is the key parameter
-                        },
-                    },
+                    "temperature": 0.7
                 },
                 timeout=TIMEOUT_SECONDS
             )
@@ -370,10 +374,6 @@ def _make_api_call(messages):
             if status == 429:
                 logging.warning(f"[429 Rate Limit] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping 5s...")
                 time.sleep(5)
-            elif status in [500, 502, 503, 504]:
-                wait_time = max(5, min(60, 2 ** attempt * 5))
-                logging.warning(f"[{status} Server Error] Attempt {attempt+1}/{MAX_RETRIES}. Sleeping {wait_time}s...")
-                time.sleep(wait_time)
             else:
                 logging.warning(
                     f"[HTTP {status}] Attempt {attempt+1}/{MAX_RETRIES} — {e} | body: {body}"
@@ -487,41 +487,22 @@ def parse_prediction(text, persons, pets):
     person_room = {}
     pet_room = {}
 
-    text_lower = text.lower()
-    
-    # 1. Attempt to isolate the final logical conclusion
-    keywords = ["final answer", "final configuration", "the tenants are", "conclusion:", "tenants:"]
-    block = text_lower
-    for kw in keywords:
-        if kw in text_lower:
-            block = text_lower[text_lower.rfind(kw):]
-            break
-            
-    # 2. Extract positive assignment sentences/lines
-    sentences = re.split(r'[\n\.;]|\s*,\s*(?=room\b|r\d\b)', block, flags=re.IGNORECASE)
-    positive_sentences = []
-    
-    # Read backwards to prioritize the actual final assignments over any initial assumptions
-    for s in reversed(sentences):
-        if s and not re.search(r'\b(not|cannot|can\'t|n\'t)\b', s):
-            positive_sentences.append(s)
-            
-    # 3. Map entities found in the same line as a room ID
-    for s in positive_sentences:
-        rooms = re.findall(r'(?:room\s*|r)(\d)\b', s)
-        if not rooms:
-            continue
-            
-        # Match entities with the first room identified in the segment
-        room_num = int(rooms[0])
-        
-        for p in persons:
-            if re.search(r'\b' + re.escape(p.lower()) + r'\b', s) and p not in person_room:
-                person_room[p] = room_num
-                
-        for pt in pets:
-            if re.search(r'\b' + re.escape(pt.lower()) + r'\b', s) and pt not in pet_room:
-                pet_room[pt] = room_num
+    lines = text.strip().split('\n')
+    for line in reversed(lines):
+        line_lower = line.lower()
+        match = re.search(r'room\s*(\d)', line_lower)
+        if match:
+            room_num = int(match.group(1))
+
+            for p in persons:
+                if p.lower() in line_lower and p not in person_room:
+                    if not re.search(r'\b(not|cannot|can\'t|n\'t)\b', line_lower):
+                        person_room[p] = room_num
+
+            for pt in pets:
+                if pt.lower() in line_lower and pt not in pet_room:
+                    if not re.search(r'\b(not|cannot|can\'t|n\'t)\b', line_lower):
+                        pet_room[pt] = room_num
 
     return person_room, pet_room
 
@@ -663,38 +644,6 @@ def score_prediction(prediction, persons, pets, gt_person_room, gt_pet_room):
     return score, max_score
 
 
-def score_reasoning(prediction, reasoningMode):
-    """
-    Returns a heuristic structure score (0.0 to 1.0) based on expected reasoning traits.
-    It doesn't verify the final answer, only the process.
-    """
-    score = 0.0
-    text = prediction.lower()
-    
-    # 1. Base length reward (up to 0.3 for thoroughness)
-    length = len(text)
-    if length > 500:
-        score += 0.3
-    elif length > 200:
-        score += 0.15
-        
-    # 2. Structure markers reward (up to 0.4)
-    structure_markers = ["step", "first", "second", "then", "finally", "approach", "consider"]
-    found_markers = sum(1 for marker in structure_markers if marker in text)
-    score += min(0.4, found_markers * 0.1)
-    
-    # 3. Logical connectors reward (up to 0.3)
-    logic_markers = ["since", "because", "therefore", "implies", "must", "cannot", "thus"]
-    found_logic = sum(1 for marker in logic_markers if marker in text)
-    score += min(0.3, found_logic * 0.1)
-    
-    # Penalty: If they just answered directly without reasoning when asked to reason
-    if reasoningMode != ReasoningMode.Direct and length < 100:
-        score = 0.0
-        
-    return min(1.0, score)
-
-
 # =====================================================
 # Single work-unit (thread-safe, self-contained)
 # =====================================================
@@ -716,14 +665,6 @@ def _run_single_task(task):
     output_dir = task["output_dir"]
 
     combo_name = f"{r_mode}_{o_mode}"
-
-    # Induce an artificial staggered startup delay based on task index to prevent a Thundering Herd
-    global_task_index = task.get("global_task_index", 0)
-    if global_task_index < 20: # Only stagger the very first batch of workers 
-        # e.g Worker 0 sleeps 0s, Worker 4 sleeps 60.0s
-        startup_delay = global_task_index * 15.0 
-        time.sleep(startup_delay)
-
     logging.info(f"[{idx+1}/{total}] Running: {combo_name}")
 
     try:
@@ -746,13 +687,9 @@ def _run_single_task(task):
     )
     _safe_write(filepath, block)
 
-    # Calculate combined reward: 60% accuracy, 40% reasoning quality
-    acc_score = float(sc / msc) if msc > 0 else 0.0
-    res_score = score_reasoning(prediction, r_mode)
-    reward_val = (acc_score * 0.6) + (res_score * 0.4)
-
-    # Collect RL data payload with combined reward
+    # Collect RL data payload with automated reward mapping to sc/msc accuracy
     rl_data_path = os.path.join(output_dir, "rl_collection.jsonl")
+    reward_val = float(sc / msc) if msc > 0 else 0.0
     rl_record = {
         "reasoning_mode": str(r_mode),
         "user": full_prompt,
@@ -765,7 +702,7 @@ def _run_single_task(task):
     }
     _safe_write(rl_data_path, json.dumps(rl_record) + "\n")
 
-    logging.info(f"[{idx+1}/{total}] {combo_name} → Acc: {sc}/{msc} | Res: {res_score:.2f} | Final Reward: {reward_val:.2f}")
+    logging.info(f"[{idx+1}/{total}] {combo_name} → {sc}/{msc} (Reward: {reward_val:.2f})")
 
     return {
         "combo_name": combo_name,
@@ -778,93 +715,6 @@ def _run_single_task(task):
 # =====================================================
 # Main Evaluation — Parallel
 # =====================================================
-
-# =====================================================
-# GitHub Results Uploader
-# =====================================================
-
-def push_results_to_github(results: dict, elapsed: float, failed: int, total_tasks: int, run_timestamp: str):
-    """
-    Append or update this run's summary to results_log.json on GitHub.
-    Uses run_timestamp to update the ongoing run rather than duplicating it.
-    """
-    if not GITHUB_TOKEN:
-        logging.warning("[GitHub] GITHUB_TOKEN not set - skipping upload.")
-        return
-    if GITHUB_REPO == "YOUR_USERNAME/YOUR_REPO":
-        logging.warning("[GitHub] GITHUB_REPO not configured - skipping upload.")
-        return
-
-    api_url = (
-        f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_RESULTS_PATH}"
-    )
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json",
-    }
-
-    # 1. Fetch existing file (to get SHA for update, and current entries)
-    get_resp = requests.get(api_url, headers=headers)
-    if get_resp.status_code == 200:
-        file_info = get_resp.json()
-        sha = file_info["sha"]
-        existing = json.loads(base64.b64decode(file_info["content"]).decode())
-    elif get_resp.status_code == 404:
-        sha = None
-        existing = []  # first run - create the file
-    else:
-        logging.error(f"[GitHub] Failed to fetch {GITHUB_RESULTS_PATH}: {get_resp.status_code} {get_resp.text}")
-        return
-
-    # 2. Build the new entry for this run
-    new_entry = {
-        "timestamp": run_timestamp,
-        "model": MODEL,
-        "total_tasks": total_tasks,
-        "failed": failed,
-        "elapsed_seconds": round(elapsed, 1),
-        "scores": {
-            k: {
-                "accuracy": round(v["score"] / v["max_score"], 4) if v["max_score"] > 0 else 0.0,
-                "score": v["score"],
-                "max_score": v["max_score"],
-            }
-            for k, v in results.items()
-        },
-    }
-    
-    # 3. Append or replace the ongoing run
-    replaced = False
-    for i, entry in enumerate(existing):
-        if entry.get("timestamp") == run_timestamp:
-            existing[i] = new_entry
-            replaced = True
-            break
-            
-    if not replaced:
-        existing.append(new_entry)
-
-    # 3. Encode and push
-    encoded = base64.b64encode(json.dumps(existing, indent=2).encode()).decode()
-    commit_msg = (
-        f"results: {new_entry['timestamp'][:10]} | "
-        f"{total_tasks} tasks | model={MODEL}"
-    )
-    payload = {
-        "message": commit_msg,
-        "content": encoded,
-        "branch": GITHUB_BRANCH,
-    }
-    if sha:
-        payload["sha"] = sha  # required when updating an existing file
-
-    put_resp = requests.put(api_url, headers=headers, json=payload)
-    if put_resp.status_code in (200, 201):
-        html_url = put_resp.json().get("content", {}).get("html_url", "")
-        logging.info(f"[GitHub] results_log.json pushed successfully -> {html_url}")
-    else:
-        logging.error(f"[GitHub] Push failed: {put_resp.status_code} {put_resp.text}")
-
 
 def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir):
     """Run the full evaluation sweep in parallel."""
@@ -887,17 +737,9 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
         # OptimizationMode.DISTILLATION
     ]
 
-    run_timestamp = datetime.now(timezone.utc).isoformat()
     total = len(ds["train"])
-    
-    # Determine the actual list of indices we are going to process
-    indices_to_process = []
-    for i in range(total):
-        if i < start_index:
-            continue
-        indices_to_process.append(i)
-        if max_samples and len(indices_to_process) >= max_samples:
-            break
+    if max_samples:
+        total = min(total, max_samples)
 
     # Initialise results accumulator
     results = {}
@@ -906,20 +748,12 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
             combo = f"{r}_{o}"
             results[combo] = {"score": 0, "max_score": 0}
 
-    total_questions = len(indices_to_process)
-    total_tasks = total_questions * len(all_reasoning_modes) * len(all_optimization_modes)
-    
-    # Setup sensible fallbacks if empty
-    summary_text = ""
-    summary_path = os.path.join(output_dir, "sweep_results.txt")
-    
-    if total_tasks == 0:
-        logging.warning("No questions match the start_index and max_samples filters.")
-        return
-    
-    # ---- Generate All Tasks ----
-    all_tasks = []
-    for i in indices_to_process:
+    # ---- Build work queue ----
+    tasks = []
+    for i in range(total):
+        if i < start_index:
+            continue
+
         sample = ds["train"][i]
         full_prompt = sample["prompt"] + "\n\n" + sample["question"]
         ground_truth = sample["completion"]
@@ -938,7 +772,7 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
 
         for r_mode in all_reasoning_modes:
             for o_mode in all_optimization_modes:
-                all_tasks.append({
+                tasks.append({
                     "index": i,
                     "r_mode": r_mode,
                     "o_mode": o_mode,
@@ -949,21 +783,21 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
                     "gt_pet_room": gt_pet_room,
                     "total": total,
                     "output_dir": output_dir,
-                    "global_task_index": len(all_tasks),
                 })
 
-    # Track completion per question
-    tasks_per_question = len(all_reasoning_modes) * len(all_optimization_modes)
-    question_completions = {i: 0 for i in indices_to_process}
-
-    # ---- Execute All Tasks ----
-    completed_global = 0
-    failed_global = 0
-    start_time = time.monotonic()
-
+    total_tasks = len(tasks)
     logging.info(
-        f"Starting evaluation: {total_tasks} tasks across {num_workers} workers (Continuous Queue)"
+        f"Starting evaluation: {total_tasks} tasks across {num_workers} workers"
     )
+    logging.info(
+        f"  Questions: {start_index}–{total-1}  |  "
+        f"Modes: {len(all_reasoning_modes)}R × {len(all_optimization_modes)}O"
+    )
+
+    # ---- Execute in parallel ----
+    completed = 0
+    failed = 0
+    start_time = time.monotonic()
 
     with ThreadPoolExecutor(
         max_workers=num_workers,
@@ -971,12 +805,11 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
     ) as executor:
         future_to_task = {
             executor.submit(_run_single_task, task): task
-            for task in all_tasks
+            for task in tasks
         }
 
         for future in as_completed(future_to_task):
-            completed_global += 1
-            task = future_to_task[future]
+            completed += 1
             try:
                 result = future.result()
                 combo = result["combo_name"]
@@ -986,38 +819,44 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
                     results[combo]["max_score"] += result["max_score"]
 
             except Exception as e:
-                failed_global += 1
+                failed += 1
+                task = future_to_task[future]
                 logging.error(
                     f"Task [{task['index']+1}] "
                     f"{task['r_mode']}_{task['o_mode']} raised: {e}"
                 )
 
-            # Save live local summary every time a single combination finishes
-            elapsed_so_far = time.monotonic() - start_time
-            summary_lines = [
-                "\n========================================",
-                "CURRENT SUMMARY (Live)",
-                "========================================",
-                f"Total tasks: {completed_global}/{total_tasks}  |  Failed: {failed_global}  |  "
-                f"Time: {elapsed_so_far:.1f}s",
-                "----------------------------------------",
-            ]
-            for k, v in results.items():
-                acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
-                summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
+            # Progress update every 10 tasks
+            if completed % 10 == 0 or completed == total_tasks:
+                elapsed = time.monotonic() - start_time
+                rate = completed / elapsed if elapsed > 0 else 0
+                eta = (total_tasks - completed) / rate if rate > 0 else 0
+                logging.info(
+                    f"Progress: {completed}/{total_tasks} "
+                    f"({completed/total_tasks:.0%}) | "
+                    f"Failed: {failed} | "
+                    f"Rate: {rate:.1f} tasks/s | "
+                    f"ETA: {eta:.0f}s"
+                )
 
-            summary_text = "\n".join(summary_lines) + "\n"
-            summary_path = os.path.join(output_dir, "sweep_results.txt")
-            _safe_write(summary_path, summary_text)
+    # ---- Save summary ----
+    elapsed_total = time.monotonic() - start_time
 
-            # Mark this question's combination as complete
-            q_index = task["index"]
-            question_completions[q_index] += 1
+    summary_lines = [
+        "\n========================================",
+        "FINAL SUMMARY",
+        "========================================",
+        f"Total tasks: {total_tasks}  |  Failed: {failed}  |  "
+        f"Time: {elapsed_total:.1f}s",
+        "----------------------------------------",
+    ]
+    for k, v in results.items():
+        acc = v["score"] / v["max_score"] if v["max_score"] > 0 else 0
+        summary_lines.append(f"{k}: {acc:.4f} ({v['score']}/{v['max_score']})")
 
-            # If this question is fully complete across all combinations, push to GitHub
-            if question_completions[q_index] == tasks_per_question:
-                logging.info(f"Question {q_index+1} complete. Pushing live results to GitHub...")
-                push_results_to_github(results, elapsed_so_far, failed_global, completed_global, run_timestamp)
+    summary_text = "\n".join(summary_lines) + "\n"
+    summary_path = os.path.join(output_dir, "sweep_results.txt")
+    _safe_write(summary_path, summary_text)
 
     print("\n" + "=" * 50)
     print("FINAL RESULTS SUMMARY")
@@ -1025,12 +864,14 @@ def evaluate_all_combinations(num_workers, max_samples, start_index, output_dir)
     print(summary_text)
     print(f"Results saved to: {summary_path}")
 
+
 # =====================================================
 # Entry Point
 # =====================================================
 
 if __name__ == "__main__":
     args = parse_args()
+
     setup_logging(args.log_level)
     RATE_LIMIT_GAP = args.rate_limit
 
@@ -1043,8 +884,6 @@ if __name__ == "__main__":
     logging.info(f"  Output dir:  {args.output_dir}")
     logging.info(f"  Rate limit:  {args.rate_limit}s between requests")
     logging.info(f"  Model:       {MODEL}")
-    logging.info(f"  Max output tokens: {args.max_output_tokens}")
-    logging.info(f"  Thinking budget:   {args.thinking_budget}")
 
     evaluate_all_combinations(
         num_workers=args.num_workers,

@@ -22,6 +22,14 @@ reasoningPolicies = {
     )
 }
 
+class OptimizationMode:
+    NONE = "none"
+    INFERENCE_SCALING = "inference_scaling"
+    PURE_RL = "pure_rl"
+    SFT = "sft"
+    SFT_RL = "sft_rl"
+    DISTILLATION = "distillation"
+
 SFT_DATASET = {}
 
 SFT_DATASET[ReasoningMode.MultiStep] = [
@@ -63,7 +71,14 @@ SFT_DATASET[ReasoningMode.MultiStep] = [
 Step 2: Substitute values: 90 ÷ 3.
 Step 3: Divide 90 by 3 = 30.
 Final Answer: The car's fuel efficiency is 30 miles per gallon."""
-    }
+    },
+    {
+        "user": "A car uses 3 gallons of fuel to travel 90 miles. What is the fuel efficiency in miles per gallon?",
+        "assistant": """Step 1: Fuel efficiency is calculated as miles ÷ gallons.
+Step 2: Substitute values: 90 ÷ 3.
+Step 3: Divide 90 by 3 = 30.
+Final Answer: The car's fuel efficiency is 30 miles per gallon."""
+    },
 ]
 
 SFT_DATASET[ReasoningMode.Direct] = [

@@ -1,0 +1,14 @@
+{
+  "model": "Qwen/Qwen3.5-27B-FP8",
+  "messages": [
+    {
+      "role": "user",
+      "content": "You are given a logic test.  Are you ready?\n\n Definition:\n  Given X, Y, Z are persons, define the following symbolic relationships:\n  1. X: # o o means that there are 3 rooms, and Person X is assigned to the room marked by #. For this example, X is assigned to the 1st room of the 3 rooms. Similarly, Y: o # o means that Person Y is assigned to the 2nd room.\n  2. X: x o o means that there are 3 rooms, and Person X can’t be assigned to the room marked by x. For this example, X cannot be assigned to the 1st room of the 3 rooms. Similarly, Y: o x o means that Person Y can’t be assigned to the 2nd room.\n  3. X = Y means Person X’s room is next to Person Y’s room regardless of the order. That is, X’s room can be before or after Y’s room.\n  4. X <> Y means Person X’s room is before Person Y’s room.  That is, X’s room number is lower than Y’s. They need not be adjacent.\n  5. X @ Y means that X and Y are assigned to the same room.\n  6. ! is the negation of the subsequent relationship operator.\n  For example, X != Y means that Person X’s room is not next to Person Y’s room. Similarly, X !@ Y means that X, Y cannot be assigned to the same room.\n\n  Instructions:\n In the following questions, you are asked to assign rooms to the persons and their pets according to the given restrictions.  You should fill in as many rooms as possible, and all persons and their pets should be assigned rooms.  No pet can stay alone in any room.  Each room can accommodate at most one person and one pet.\n\nThere are 4 rooms, which are assigned to  Alice, Bob, Charlie, Diana with pets:  anole, bat, cat, dog. You should fill as many rooms as possible. Here are the restrictions for the room assignment:\n\n 1 . dog = Diana \n 2 . Diana !@ dog \n 3 . Alice <> bat \n 4 . Charlie: o o o # \n 5 . Alice !@ cat \n 6 . anole: # o o o \n 7 . anole = dog \n 8 . Diana: x o o o \n 9 . Alice != Charlie \n 10 . Alice: # o o o \n 11 . Charlie @ bat \n 12 . Bob @ dog \n 13 . Charlie = Diana \n \n\n What are the tenants in the rooms?"
+    }
+  ],
+  "max_tokens": 10240,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "thinking_budget": 512
+  }
+}
