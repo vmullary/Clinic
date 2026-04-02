@@ -874,9 +874,9 @@
   {
     "timestamp": "2026-04-02T03:36:24.951638+00:00",
     "model": "Qwen/Qwen3.5-27B-FP8",
-    "total_tasks": 512,
+    "total_tasks": 513,
     "failed": 0,
-    "elapsed_seconds": 70792.7,
+    "elapsed_seconds": 70796.3,
     "scores": {
       "direct_inference_scaling": {
         "accuracy": 0.7735,
@@ -964,9 +964,9 @@
         "max_score": 450
       },
       "continuous_pure_rl": {
-        "accuracy": 0.7083,
-        "score": 306,
-        "max_score": 432
+        "accuracy": 0.72,
+        "score": 324,
+        "max_score": 450
       },
       "continuous_sft": {
         "accuracy": 0.7009,
