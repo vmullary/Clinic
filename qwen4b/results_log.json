@@ -765,9 +765,9 @@
   {
     "timestamp": "2026-04-04T20:34:22.595056+00:00",
     "model": "Qwen/Qwen3.5-27B-FP8",
-    "total_tasks": 2244,
+    "total_tasks": 2262,
     "failed": 0,
-    "elapsed_seconds": 103018.5,
+    "elapsed_seconds": 103900.4,
     "scores": {
       "direct_inference_scaling": {
         "accuracy": 0.7517,
@@ -780,94 +780,94 @@
         "max_score": 2034
       },
       "direct_sft": {
-        "accuracy": 0.7527,
-        "score": 1531,
-        "max_score": 2034
+        "accuracy": 0.7549,
+        "score": 1549,
+        "max_score": 2052
       },
       "direct_sft_rl": {
-        "accuracy": 0.7901,
-        "score": 1607,
-        "max_score": 2034
+        "accuracy": 0.7865,
+        "score": 1614,
+        "max_score": 2052
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.8075,
-        "score": 1628,
-        "max_score": 2016
+        "accuracy": 0.8068,
+        "score": 1641,
+        "max_score": 2034
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.876,
-        "score": 1766,
-        "max_score": 2016
+        "accuracy": 0.8751,
+        "score": 1780,
+        "max_score": 2034
       },
       "multi_step_sft": {
-        "accuracy": 0.874,
-        "score": 1762,
-        "max_score": 2016
+        "accuracy": 0.8732,
+        "score": 1776,
+        "max_score": 2034
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.8224,
-        "score": 1658,
-        "max_score": 2016
+        "accuracy": 0.822,
+        "score": 1672,
+        "max_score": 2034
       },
       "chain_inference_scaling": {
-        "accuracy": 0.9315,
-        "score": 1878,
-        "max_score": 2016
+        "accuracy": 0.9287,
+        "score": 1889,
+        "max_score": 2034
       },
       "chain_pure_rl": {
-        "accuracy": 0.8214,
-        "score": 1656,
-        "max_score": 2016
+        "accuracy": 0.8215,
+        "score": 1671,
+        "max_score": 2034
       },
       "chain_sft": {
-        "accuracy": 0.8904,
-        "score": 1795,
-        "max_score": 2016
+        "accuracy": 0.8894,
+        "score": 1809,
+        "max_score": 2034
       },
       "chain_sft_rl": {
-        "accuracy": 0.8819,
-        "score": 1778,
-        "max_score": 2016
+        "accuracy": 0.881,
+        "score": 1792,
+        "max_score": 2034
       },
       "tree_inference_scaling": {
-        "accuracy": 0.7128,
-        "score": 1437,
-        "max_score": 2016
+        "accuracy": 0.7134,
+        "score": 1451,
+        "max_score": 2034
       },
       "tree_pure_rl": {
-        "accuracy": 0.7793,
-        "score": 1571,
-        "max_score": 2016
+        "accuracy": 0.7797,
+        "score": 1586,
+        "max_score": 2034
       },
       "tree_sft": {
-        "accuracy": 0.7867,
-        "score": 1586,
-        "max_score": 2016
+        "accuracy": 0.7866,
+        "score": 1600,
+        "max_score": 2034
       },
       "tree_sft_rl": {
-        "accuracy": 0.8244,
-        "score": 1662,
-        "max_score": 2016
+        "accuracy": 0.824,
+        "score": 1676,
+        "max_score": 2034
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.8676,
-        "score": 1749,
-        "max_score": 2016
+        "accuracy": 0.8668,
+        "score": 1763,
+        "max_score": 2034
       },
       "continuous_pure_rl": {
-        "accuracy": 0.8447,
-        "score": 1703,
-        "max_score": 2016
+        "accuracy": 0.8441,
+        "score": 1717,
+        "max_score": 2034
       },
       "continuous_sft": {
-        "accuracy": 0.8695,
-        "score": 1753,
-        "max_score": 2016
+        "accuracy": 0.8697,
+        "score": 1769,
+        "max_score": 2034
       },
       "continuous_sft_rl": {
-        "accuracy": 0.8661,
-        "score": 1746,
-        "max_score": 2016
+        "accuracy": 0.8633,
+        "score": 1756,
+        "max_score": 2034
       }
     }
   }
