@@ -983,109 +983,109 @@
   {
     "timestamp": "2026-04-08T07:00:13.274693+00:00",
     "model": "Qwen/Qwen3.5-27B-FP8",
-    "total_tasks": 300,
+    "total_tasks": 320,
     "failed": 0,
-    "elapsed_seconds": 14091.3,
+    "elapsed_seconds": 15228.1,
     "scores": {
       "direct_inference_scaling": {
-        "accuracy": 0.6825,
-        "score": 215,
-        "max_score": 315
+        "accuracy": 0.7024,
+        "score": 236,
+        "max_score": 336
       },
       "direct_pure_rl": {
-        "accuracy": 0.9206,
-        "score": 290,
-        "max_score": 315
+        "accuracy": 0.9167,
+        "score": 308,
+        "max_score": 336
       },
       "direct_sft": {
-        "accuracy": 0.7937,
-        "score": 250,
-        "max_score": 315
+        "accuracy": 0.8065,
+        "score": 271,
+        "max_score": 336
       },
       "direct_sft_rl": {
-        "accuracy": 0.7968,
-        "score": 251,
-        "max_score": 315
+        "accuracy": 0.8095,
+        "score": 272,
+        "max_score": 336
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.8667,
-        "score": 273,
-        "max_score": 315
+        "accuracy": 0.875,
+        "score": 294,
+        "max_score": 336
       },
       "multi_step_pure_rl": {
-        "accuracy": 0.7651,
-        "score": 241,
-        "max_score": 315
+        "accuracy": 0.7798,
+        "score": 262,
+        "max_score": 336
       },
       "multi_step_sft": {
-        "accuracy": 0.8984,
-        "score": 283,
-        "max_score": 315
+        "accuracy": 0.9048,
+        "score": 304,
+        "max_score": 336
       },
       "multi_step_sft_rl": {
-        "accuracy": 0.6667,
-        "score": 210,
-        "max_score": 315
+        "accuracy": 0.6756,
+        "score": 227,
+        "max_score": 336
       },
       "chain_inference_scaling": {
-        "accuracy": 0.9016,
-        "score": 284,
-        "max_score": 315
+        "accuracy": 0.9077,
+        "score": 305,
+        "max_score": 336
       },
       "chain_pure_rl": {
-        "accuracy": 0.7524,
-        "score": 237,
-        "max_score": 315
+        "accuracy": 0.7679,
+        "score": 258,
+        "max_score": 336
       },
       "chain_sft": {
-        "accuracy": 0.8,
-        "score": 252,
-        "max_score": 315
+        "accuracy": 0.8125,
+        "score": 273,
+        "max_score": 336
       },
       "chain_sft_rl": {
-        "accuracy": 0.8603,
-        "score": 271,
-        "max_score": 315
+        "accuracy": 0.8333,
+        "score": 280,
+        "max_score": 336
       },
       "tree_inference_scaling": {
         "accuracy": 0.8095,
-        "score": 255,
-        "max_score": 315
+        "score": 272,
+        "max_score": 336
       },
       "tree_pure_rl": {
-        "accuracy": 0.7556,
+        "accuracy": 0.7083,
         "score": 238,
-        "max_score": 315
+        "max_score": 336
       },
       "tree_sft": {
-        "accuracy": 0.6,
-        "score": 189,
-        "max_score": 315
+        "accuracy": 0.625,
+        "score": 210,
+        "max_score": 336
       },
       "tree_sft_rl": {
-        "accuracy": 0.8159,
-        "score": 257,
-        "max_score": 315
+        "accuracy": 0.8274,
+        "score": 278,
+        "max_score": 336
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.8381,
-        "score": 264,
-        "max_score": 315
+        "accuracy": 0.8482,
+        "score": 285,
+        "max_score": 336
       },
       "continuous_pure_rl": {
-        "accuracy": 0.781,
-        "score": 246,
-        "max_score": 315
+        "accuracy": 0.756,
+        "score": 254,
+        "max_score": 336
       },
       "continuous_sft": {
-        "accuracy": 0.9111,
-        "score": 287,
-        "max_score": 315
+        "accuracy": 0.9167,
+        "score": 308,
+        "max_score": 336
       },
       "continuous_sft_rl": {
-        "accuracy": 0.8032,
-        "score": 253,
-        "max_score": 315
+        "accuracy": 0.8155,
+        "score": 274,
+        "max_score": 336
       }
     }
   }
