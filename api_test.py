@@ -339,6 +339,7 @@ def _make_api_call(messages):
                     "messages": messages,
                     "max_tokens": args.max_output_tokens,
                     "temperature": 0.5,
+                    "stream": True,
                     "extra_body": {
                         "custom_logit_processor": "Qwen35ThinkingBudgetLogitProcessor",  # or the .to_str() version if needed
                         "custom_params": {
@@ -346,13 +347,31 @@ def _make_api_call(messages):
                         },
                     },
                 },
-                timeout=TIMEOUT_SECONDS
+                timeout=TIMEOUT_SECONDS,
+                stream=True
             )
 
             response.raise_for_status()
-            msg = response.json()["choices"][0]["message"]
-            # This model returns content=null with the reply in reasoning_content
-            reply = msg.get("content") or msg.get("reasoning_content") or ""
+            
+            # Process Server-Sent Events (SSE) stream
+            reply = ""
+            for line in response.iter_lines():
+                if line:
+                    line_str = line.decode('utf-8')
+                    if line_str.startswith("data: "):
+                        data_str = line_str[6:].strip()
+                        if data_str == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data_str)
+                            if "choices" in chunk and len(chunk["choices"]) > 0:
+                                delta = chunk["choices"][0].get("delta", {})
+                                c = delta.get("content") or ""
+                                rc = delta.get("reasoning_content") or ""
+                                reply += rc + c
+                        except Exception:
+                            pass
+            
             if not reply:
                 logging.warning(f"[Empty reply] Response had no content or reasoning_content")
             return reply
