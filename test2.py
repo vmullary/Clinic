@@ -10,8 +10,12 @@ Usage:
 """
 
 import os
-import re
 import sys
+
+# Ensure the script directory is in the search path for local modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+import re
 import time
 import json
 import base64
@@ -34,8 +38,8 @@ def parse_args():
         description="Parallel LLM reasoning evaluation sweep"
     )
     parser.add_argument(
-        "--num_workers", type=int, default=20,
-        help="Number of parallel worker threads (default: 4)"
+        "--num_workers", type=int, default=2,
+        help="Number of parallel worker threads (default: 2)"
     )
     parser.add_argument(
         "--max_samples", type=int, default=None,
@@ -47,17 +51,25 @@ def parse_args():
     )
     parser.add_argument(
         "--output_dir", type=str,
-        default="C:/Users/vwmul/Downloads/New Results",
+        default="C:/Users/vwmul/Downloads/Qwen",
         help="Directory to save results files"
     )
     parser.add_argument(
-        "--rate_limit", type=float, default=0.15,
+        "--rate_limit", type=float, default=1.0,
         help="Minimum seconds between API requests across all workers (default: 0.15)"
     )
     parser.add_argument(
         "--log_level", type=str, default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Logging verbosity (default: INFO)"
+    )
+    parser.add_argument(
+        "--thinking_budget", type=int, default=512,
+        help="Thinking tokens budget for the model (default: 256)"
+    )
+    parser.add_argument(
+        "--max_output_tokens", type=int, default=8192,
+        help="Maximum number of output tokens (default: 8192)"
     )
     return parser.parse_args()
 
@@ -84,7 +96,21 @@ URL = "https://game.agaii.org/llm/v1/chat/completions"
 HEADERS = {
     "Content-Type": "application/json"
 }
-MODEL = "Qwen3.5-4B"
+MODEL = "Qwen/Qwen3.5-4B"
+
+# Persistent session for connection pooling (avoids TCP+TLS overhead per request)
+_api_session = requests.Session()
+_api_session.headers.update(HEADERS)
+
+# Configure connection pooling
+_adapter = requests.adapters.HTTPAdapter(
+    pool_connections=100,
+    pool_maxsize=100,
+    max_retries=0,  # We handle retries ourselves
+    pool_block=False
+)
+_api_session.mount("https://", _adapter)
+_api_session.mount("http://", _adapter)
 
 TIMEOUT_SECONDS = 600
 MAX_RETRIES = 8
@@ -149,46 +175,13 @@ def _safe_write(filepath: str, content: str, mode: str = "a"):
 # =====================================================
 # Reasoning Modes
 # =====================================================
-
-class ReasoningMode:
-    Direct = "direct"
-    MultiStep = "multi_step"
-    Chain = "chain"
-    Tree = "tree"
-    COCONUT = "continuous"
-    Critic = "critic"
-
-reasoningPolicies = {
-    ReasoningMode.Direct: "Answer directly with no explanation.",
-    ReasoningMode.MultiStep: "Solve the problem step by step and explain each step.",
-    ReasoningMode.Chain: "Provide a brief reasoning chain, then give the final answer.",
-    ReasoningMode.Tree: (
-        "Consider multiple solution approaches. "
-        "Briefly evaluate each and choose the best one."
-    ),
-    ReasoningMode.COCONUT: (
-        "Maintain consistent reasoning across turns and build on previous steps."
-    ),
-    ReasoningMode.Critic: (
-        "Propose a solution, critique it, then refine the final answer."
-    )
-}
-
-from reasoningData import SFT_DATASET
-from reasoningData import RL_DATASET
-
-# =====================================================
-# Optimization Modes
-# =====================================================
-
-class OptimizationMode:
-    NONE = "none"
-    INFERENCE_SCALING = "inference_scaling"
-    PURE_RL = "pure_rl"
-    SFT = "sft"
-    SFT_RL = "sft_rl"
-    DISTILLATION = "distillation"
-
+from reasoningData import (
+    ReasoningMode, 
+    reasoningPolicies, 
+    SFT_DATASET, 
+    RL_DATASET, 
+    OptimizationMode
+)
 
 def get_sft_examples(reasoningMode):
     examples = SFT_DATASET.get(reasoningMode, [])
@@ -220,6 +213,10 @@ def get_high_reward_examples(reasoningMode, threshold=0.8):
     for entry in entries:
         for idx, response in enumerate(entry["responses"]):
             if response["reward"] >= threshold:
+                examples.append({
+                    "role": "user",
+                    "content": entry["user"]
+                })
                 examples.append({
                     "role": "assistant",
                     "content": response["text"]
@@ -341,29 +338,53 @@ def detect_output_loop(text):
 def _make_api_call(messages):
     """
     Handles the raw HTTP request with timeout, retry, and back-off.
-    Uses a plain requests.post per attempt (no shared session) to match
-    the reference snippet exactly.
+    Uses a persistent session for connection pooling (avoids TCP+TLS overhead).
     Returns the reply text, or None if all attempts fail.
     """
     for attempt in range(MAX_RETRIES):
         try:
             _rate_limited_wait()
 
-            response = requests.post(
+            response = _api_session.post(
                 URL,
                 json={
                     "model": MODEL,
                     "messages": messages,
-                    "max_tokens": 512,
-                    "temperature": 0.7
+                    "max_tokens": args.max_output_tokens,
+                    "temperature": 0.5,
+                    "stream": True,
+                    "extra_body": {
+                        "custom_logit_processor": "Qwen35ThinkingBudgetLogitProcessor",  # or the .to_str() version if needed
+                        "custom_params": {
+                            "thinking_budget": args.thinking_budget,        # ← This is the key parameter
+                        },
+                    },
                 },
-                timeout=TIMEOUT_SECONDS
+                timeout=TIMEOUT_SECONDS,
+                stream=True
             )
 
             response.raise_for_status()
-            msg = response.json()["choices"][0]["message"]
-            # This model returns content=null with the reply in reasoning_content
-            reply = msg.get("content") or msg.get("reasoning_content") or ""
+            
+            # Process Server-Sent Events (SSE) stream
+            reply = ""
+            for line in response.iter_lines():
+                if line:
+                    line_str = line.decode('utf-8')
+                    if line_str.startswith("data: "):
+                        data_str = line_str[6:].strip()
+                        if data_str == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data_str)
+                            if "choices" in chunk and len(chunk["choices"]) > 0:
+                                delta = chunk["choices"][0].get("delta", {})
+                                c = delta.get("content") or ""
+                                rc = delta.get("reasoning_content") or ""
+                                reply += rc + c
+                        except Exception:
+                            pass
+            
             if not reply:
                 logging.warning(f"[Empty reply] Response had no content or reasoning_content")
             return reply
@@ -498,22 +519,41 @@ def parse_prediction(text, persons, pets):
     person_room = {}
     pet_room = {}
 
-    lines = text.strip().split('\n')
-    for line in reversed(lines):
-        line_lower = line.lower()
-        match = re.search(r'room\s*(\d)', line_lower)
-        if match:
-            room_num = int(match.group(1))
-
-            for p in persons:
-                if p.lower() in line_lower and p not in person_room:
-                    if not re.search(r'\b(not|cannot|can\'t|n\'t)\b', line_lower):
-                        person_room[p] = room_num
-
-            for pt in pets:
-                if pt.lower() in line_lower and pt not in pet_room:
-                    if not re.search(r'\b(not|cannot|can\'t|n\'t)\b', line_lower):
-                        pet_room[pt] = room_num
+    text_lower = text.lower()
+    
+    # 1. Attempt to isolate the final logical conclusion
+    keywords = ["final answer", "final configuration", "the tenants are", "conclusion:", "tenants:"]
+    block = text_lower
+    for kw in keywords:
+        if kw in text_lower:
+            block = text_lower[text_lower.rfind(kw):]
+            break
+            
+    # 2. Extract positive assignment sentences/lines
+    sentences = re.split(r'[\n\.;]|\s*,\s*(?=room\b|r\d\b)', block, flags=re.IGNORECASE)
+    positive_sentences = []
+    
+    # Read backwards to prioritize the actual final assignments over any initial assumptions
+    for s in reversed(sentences):
+        if s and not re.search(r'\b(not|cannot|can\'t|n\'t)\b', s):
+            positive_sentences.append(s)
+            
+    # 3. Map entities found in the same line as a room ID
+    for s in positive_sentences:
+        rooms = re.findall(r'(?:room\s*|r)(\d)\b', s)
+        if not rooms:
+            continue
+            
+        # Match entities with the first room identified in the segment
+        room_num = int(rooms[0])
+        
+        for p in persons:
+            if re.search(r'\b' + re.escape(p.lower()) + r'\b', s) and p not in person_room:
+                person_room[p] = room_num
+                
+        for pt in pets:
+            if re.search(r'\b' + re.escape(pt.lower()) + r'\b', s) and pt not in pet_room:
+                pet_room[pt] = room_num
 
     return person_room, pet_room
 
@@ -524,10 +564,14 @@ def parse_prediction(text, persons, pets):
 
 def inference_scaling(reasoningMode, userInput, n=5, conversation_memory=None):
     candidates = []
-    for _ in range(n):
-        response = base_call(reasoningMode, userInput,
-                             conversation_memory=conversation_memory)
-        candidates.append(response)
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    with ThreadPoolExecutor(max_workers=n) as executor:
+        futures = [
+            executor.submit(lambda: base_call(reasoningMode, userInput, conversation_memory=conversation_memory))
+            for _ in range(n)
+        ]
+        for future in as_completed(futures):
+            candidates.append(future.result())
 
     answer_map = {}
     answer_to_full = {}
@@ -655,6 +699,38 @@ def score_prediction(prediction, persons, pets, gt_person_room, gt_pet_room):
     return score, max_score
 
 
+def score_reasoning(prediction, reasoningMode):
+    """
+    Returns a heuristic structure score (0.0 to 1.0) based on expected reasoning traits.
+    It doesn't verify the final answer, only the process.
+    """
+    score = 0.0
+    text = prediction.lower()
+    
+    # 1. Base length reward (up to 0.3 for thoroughness)
+    length = len(text)
+    if length > 500:
+        score += 0.3
+    elif length > 200:
+        score += 0.15
+        
+    # 2. Structure markers reward (up to 0.4)
+    structure_markers = ["step", "first", "second", "then", "finally", "approach", "consider"]
+    found_markers = sum(1 for marker in structure_markers if marker in text)
+    score += min(0.4, found_markers * 0.1)
+    
+    # 3. Logical connectors reward (up to 0.3)
+    logic_markers = ["since", "because", "therefore", "implies", "must", "cannot", "thus"]
+    found_logic = sum(1 for marker in logic_markers if marker in text)
+    score += min(0.3, found_logic * 0.1)
+    
+    # Penalty: If they just answered directly without reasoning when asked to reason
+    if reasoningMode != ReasoningMode.Direct and length < 100:
+        score = 0.0
+        
+    return min(1.0, score)
+
+
 # =====================================================
 # Single work-unit (thread-safe, self-contained)
 # =====================================================
@@ -677,11 +753,42 @@ def _run_single_task(task):
 
     combo_name = f"{r_mode}_{o_mode}"
 
+    # Checkpoint: Check if we've already successfully parsed this combination before LLM call
+    filepath = os.path.join(output_dir, f"question{idx+1}_sweep_results.txt")
+    if os.path.exists(filepath):
+        # Use simple string parsing to see if "[$combo_name]" followed by "SCORE:" is completed
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+            if f"[{combo_name}]" in content and "SCORE:" in content.split(f"[{combo_name}]")[-1]:
+                # Find the existing score to return it properly
+                # Skipping without full LLM generation
+                logging.info(f"[{idx+1}/{total}] Skipping {combo_name} (Already Evaluated)")
+                
+                # Try to parse the SCORE: X/Y from the chunk
+                local_chunk = content.split(f"[{combo_name}]")[-1]
+                for line in local_chunk.split("\n"):
+                    if line.startswith("SCORE:"):
+                        vals = line.split("SCORE:")[1].strip().split("/")
+                        if len(vals) == 2:
+                            return {
+                                "combo_name": combo_name,
+                                "score": int(vals[0]),
+                                "max_score": int(vals[1]),
+                                "index": idx,
+                            }
+                # If score parse fails, just return a 0 score fallback
+                return {
+                    "combo_name": combo_name,
+                    "score": 0,
+                    "max_score": len(persons) * 3,
+                    "index": idx,
+                }
+
     # Induce an artificial staggered startup delay based on task index to prevent a Thundering Herd
     global_task_index = task.get("global_task_index", 0)
     if global_task_index < 20: # Only stagger the very first batch of workers 
-        # e.g Worker 0 sleeps 0s, Worker 4 sleeps 4.0s
-        startup_delay = global_task_index * 1.0 
+        # e.g Worker 0 sleeps 0s, Worker 4 sleeps 60.0s
+        startup_delay = global_task_index * 3.0 
         time.sleep(startup_delay)
 
     logging.info(f"[{idx+1}/{total}] Running: {combo_name}")
@@ -706,7 +813,26 @@ def _run_single_task(task):
     )
     _safe_write(filepath, block)
 
-    logging.info(f"[{idx+1}/{total}] {combo_name} → {sc}/{msc}")
+    # Calculate combined reward: 60% accuracy, 40% reasoning quality
+    acc_score = float(sc / msc) if msc > 0 else 0.0
+    res_score = score_reasoning(prediction, r_mode)
+    reward_val = (acc_score * 0.6) + (res_score * 0.4)
+
+    # Collect RL data payload with combined reward
+    rl_data_path = os.path.join(output_dir, "rl_collection.jsonl")
+    rl_record = {
+        "reasoning_mode": str(r_mode),
+        "user": full_prompt,
+        "responses": [
+            {
+                "text": prediction,
+                "reward": reward_val
+            }
+        ]
+    }
+    _safe_write(rl_data_path, json.dumps(rl_record) + "\n")
+
+    logging.info(f"[{idx+1}/{total}] {combo_name} → Acc: {sc}/{msc} | Res: {res_score:.2f} | Final Reward: {reward_val:.2f}")
 
     return {
         "combo_name": combo_name,
@@ -984,6 +1110,8 @@ if __name__ == "__main__":
     logging.info(f"  Output dir:  {args.output_dir}")
     logging.info(f"  Rate limit:  {args.rate_limit}s between requests")
     logging.info(f"  Model:       {MODEL}")
+    logging.info(f"  Max output tokens: {args.max_output_tokens}")
+    logging.info(f"  Thinking budget:   {args.thinking_budget}")
 
     evaluate_all_combinations(
         num_workers=args.num_workers,
