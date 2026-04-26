@@ -86,34 +86,34 @@
   {
     "timestamp": "2026-04-26T09:36:47.573424+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 365,
+    "total_tasks": 387,
     "failed": 0,
-    "elapsed_seconds": 9444.0,
+    "elapsed_seconds": 10513.6,
     "scores": {
       "direct_none": {
-        "accuracy": 0.3204,
-        "score": 99,
-        "max_score": 309
+        "accuracy": 0.3578,
+        "score": 117,
+        "max_score": 327
       },
       "direct_inference_scaling": {
-        "accuracy": 0.3398,
-        "score": 105,
-        "max_score": 309
+        "accuracy": 0.3333,
+        "score": 109,
+        "max_score": 327
       },
       "direct_gated": {
-        "accuracy": 0.4014,
-        "score": 118,
-        "max_score": 294
+        "accuracy": 0.4013,
+        "score": 124,
+        "max_score": 309
       },
       "direct_distillation": {
-        "accuracy": 0.5178,
-        "score": 160,
-        "max_score": 309
+        "accuracy": 0.5321,
+        "score": 174,
+        "max_score": 327
       },
       "multi_step_none": {
-        "accuracy": 0.3819,
-        "score": 118,
-        "max_score": 309
+        "accuracy": 0.3792,
+        "score": 124,
+        "max_score": 327
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.3851,
@@ -121,74 +121,74 @@
         "max_score": 309
       },
       "multi_step_gated": {
-        "accuracy": 0.3946,
-        "score": 116,
-        "max_score": 294
+        "accuracy": 0.4098,
+        "score": 134,
+        "max_score": 327
       },
       "multi_step_distillation": {
-        "accuracy": 0.4796,
-        "score": 141,
-        "max_score": 294
+        "accuracy": 0.4771,
+        "score": 156,
+        "max_score": 327
       },
       "chain_none": {
-        "accuracy": 0.3503,
-        "score": 103,
-        "max_score": 294
+        "accuracy": 0.3517,
+        "score": 115,
+        "max_score": 327
       },
       "chain_inference_scaling": {
-        "accuracy": 0.3197,
-        "score": 94,
-        "max_score": 294
+        "accuracy": 0.3236,
+        "score": 100,
+        "max_score": 309
       },
       "chain_gated": {
-        "accuracy": 0.4014,
-        "score": 118,
-        "max_score": 294
+        "accuracy": 0.3948,
+        "score": 122,
+        "max_score": 309
       },
       "chain_distillation": {
-        "accuracy": 0.415,
-        "score": 122,
-        "max_score": 294
+        "accuracy": 0.4272,
+        "score": 132,
+        "max_score": 309
       },
       "tree_none": {
-        "accuracy": 0.3469,
-        "score": 102,
-        "max_score": 294
+        "accuracy": 0.3463,
+        "score": 107,
+        "max_score": 309
       },
       "tree_inference_scaling": {
-        "accuracy": 0.2517,
-        "score": 74,
-        "max_score": 294
+        "accuracy": 0.2621,
+        "score": 81,
+        "max_score": 309
       },
       "tree_gated": {
-        "accuracy": 0.3401,
-        "score": 100,
-        "max_score": 294
+        "accuracy": 0.3592,
+        "score": 111,
+        "max_score": 309
       },
       "tree_distillation": {
-        "accuracy": 0.5102,
-        "score": 150,
-        "max_score": 294
+        "accuracy": 0.4984,
+        "score": 154,
+        "max_score": 309
       },
       "continuous_none": {
-        "accuracy": 0.3639,
-        "score": 107,
-        "max_score": 294
+        "accuracy": 0.3851,
+        "score": 119,
+        "max_score": 309
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3673,
-        "score": 108,
-        "max_score": 294
+        "accuracy": 0.3981,
+        "score": 123,
+        "max_score": 309
       },
       "continuous_gated": {
-        "accuracy": 0.2959,
-        "score": 87,
-        "max_score": 294
+        "accuracy": 0.2945,
+        "score": 91,
+        "max_score": 309
       },
       "continuous_distillation": {
-        "accuracy": 0.449,
-        "score": 132,
-        "max_score": 294
+        "accuracy": 0.4498,
+        "score": 139,
+        "max_score": 309
       }
     }
   }
