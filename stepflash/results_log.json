@@ -86,19 +86,19 @@
   {
     "timestamp": "2026-04-26T09:36:47.573424+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 155,
+    "total_tasks": 164,
     "failed": 0,
-    "elapsed_seconds": 1083.5,
+    "elapsed_seconds": 1423.8,
     "scores": {
       "direct_none": {
-        "accuracy": 0.2583,
+        "accuracy": 0.2246,
         "score": 31,
-        "max_score": 120
+        "max_score": 138
       },
       "direct_inference_scaling": {
-        "accuracy": 0.4,
-        "score": 48,
-        "max_score": 120
+        "accuracy": 0.3913,
+        "score": 54,
+        "max_score": 138
       },
       "direct_gated": {
         "accuracy": 0.4,
@@ -106,14 +106,14 @@
         "max_score": 120
       },
       "direct_distillation": {
-        "accuracy": 0.35,
-        "score": 42,
-        "max_score": 120
+        "accuracy": 0.3913,
+        "score": 54,
+        "max_score": 138
       },
       "multi_step_none": {
-        "accuracy": 0.35,
-        "score": 42,
-        "max_score": 120
+        "accuracy": 0.3261,
+        "score": 45,
+        "max_score": 138
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.3,
