@@ -195,9 +195,9 @@
   {
     "timestamp": "2026-04-27T05:28:15.507850+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 810,
+    "total_tasks": 811,
     "failed": 0,
-    "elapsed_seconds": 63281.0,
+    "elapsed_seconds": 63311.2,
     "scores": {
       "direct_none": {
         "accuracy": 0.3659,
@@ -290,9 +290,9 @@
         "max_score": 657
       },
       "continuous_gated": {
-        "accuracy": 0.3598,
-        "score": 231,
-        "max_score": 642
+        "accuracy": 0.3668,
+        "score": 241,
+        "max_score": 657
       },
       "continuous_distillation": {
         "accuracy": 0.4795,
