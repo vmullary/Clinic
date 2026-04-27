@@ -195,109 +195,109 @@
   {
     "timestamp": "2026-04-27T05:28:15.507850+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 431,
+    "total_tasks": 457,
     "failed": 0,
-    "elapsed_seconds": 39828.1,
+    "elapsed_seconds": 44692.6,
     "scores": {
       "direct_none": {
-        "accuracy": 0.3885,
-        "score": 148,
-        "max_score": 381
+        "accuracy": 0.3935,
+        "score": 157,
+        "max_score": 399
       },
       "direct_inference_scaling": {
-        "accuracy": 0.3675,
-        "score": 140,
-        "max_score": 381
+        "accuracy": 0.3684,
+        "score": 147,
+        "max_score": 399
       },
       "direct_gated": {
-        "accuracy": 0.3727,
-        "score": 142,
-        "max_score": 381
+        "accuracy": 0.391,
+        "score": 156,
+        "max_score": 399
       },
       "direct_distillation": {
-        "accuracy": 0.5092,
-        "score": 194,
-        "max_score": 381
+        "accuracy": 0.5088,
+        "score": 203,
+        "max_score": 399
       },
       "multi_step_none": {
-        "accuracy": 0.3806,
-        "score": 145,
-        "max_score": 381
+        "accuracy": 0.3759,
+        "score": 150,
+        "max_score": 399
       },
       "multi_step_inference_scaling": {
+        "accuracy": 0.2807,
+        "score": 112,
+        "max_score": 399
+      },
+      "multi_step_gated": {
+        "accuracy": 0.3509,
+        "score": 140,
+        "max_score": 399
+      },
+      "multi_step_distillation": {
+        "accuracy": 0.4586,
+        "score": 183,
+        "max_score": 399
+      },
+      "chain_none": {
+        "accuracy": 0.2957,
+        "score": 118,
+        "max_score": 399
+      },
+      "chain_inference_scaling": {
+        "accuracy": 0.3233,
+        "score": 129,
+        "max_score": 399
+      },
+      "chain_gated": {
+        "accuracy": 0.3208,
+        "score": 128,
+        "max_score": 399
+      },
+      "chain_distillation": {
+        "accuracy": 0.4912,
+        "score": 196,
+        "max_score": 399
+      },
+      "tree_none": {
+        "accuracy": 0.2632,
+        "score": 105,
+        "max_score": 399
+      },
+      "tree_inference_scaling": {
+        "accuracy": 0.2932,
+        "score": 117,
+        "max_score": 399
+      },
+      "tree_gated": {
         "accuracy": 0.273,
         "score": 104,
         "max_score": 381
       },
-      "multi_step_gated": {
-        "accuracy": 0.3517,
-        "score": 134,
-        "max_score": 381
-      },
-      "multi_step_distillation": {
-        "accuracy": 0.4672,
-        "score": 178,
-        "max_score": 381
-      },
-      "chain_none": {
-        "accuracy": 0.294,
-        "score": 112,
-        "max_score": 381
-      },
-      "chain_inference_scaling": {
-        "accuracy": 0.3224,
-        "score": 118,
-        "max_score": 366
-      },
-      "chain_gated": {
-        "accuracy": 0.3202,
-        "score": 122,
-        "max_score": 381
-      },
-      "chain_distillation": {
-        "accuracy": 0.4891,
-        "score": 179,
-        "max_score": 366
-      },
-      "tree_none": {
-        "accuracy": 0.2651,
-        "score": 101,
-        "max_score": 381
-      },
-      "tree_inference_scaling": {
-        "accuracy": 0.2978,
-        "score": 109,
-        "max_score": 366
-      },
-      "tree_gated": {
-        "accuracy": 0.2814,
-        "score": 103,
-        "max_score": 366
-      },
       "tree_distillation": {
-        "accuracy": 0.4617,
-        "score": 169,
-        "max_score": 366
+        "accuracy": 0.4311,
+        "score": 172,
+        "max_score": 399
       },
       "continuous_none": {
-        "accuracy": 0.3661,
-        "score": 134,
-        "max_score": 366
+        "accuracy": 0.3709,
+        "score": 148,
+        "max_score": 399
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3661,
-        "score": 134,
-        "max_score": 366
+        "accuracy": 0.357,
+        "score": 136,
+        "max_score": 381
       },
       "continuous_gated": {
-        "accuracy": 0.3552,
-        "score": 130,
-        "max_score": 366
+        "accuracy": 0.3465,
+        "score": 132,
+        "max_score": 381
       },
       "continuous_distillation": {
-        "accuracy": 0.459,
-        "score": 168,
-        "max_score": 366
+        "accuracy": 0.4336,
+        "score": 173,
+        "max_score": 399
       }
     }
   }
