@@ -195,24 +195,24 @@
   {
     "timestamp": "2026-04-27T05:28:15.507850+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 1444,
+    "total_tasks": 1465,
     "failed": 0,
-    "elapsed_seconds": 106899.8,
+    "elapsed_seconds": 107809.7,
     "scores": {
       "direct_none": {
-        "accuracy": 0.3918,
+        "accuracy": 0.386,
         "score": 469,
-        "max_score": 1197
+        "max_score": 1215
       },
       "direct_inference_scaling": {
-        "accuracy": 0.3968,
-        "score": 475,
-        "max_score": 1197
+        "accuracy": 0.4,
+        "score": 486,
+        "max_score": 1215
       },
       "direct_gated": {
-        "accuracy": 0.3825,
-        "score": 451,
-        "max_score": 1179
+        "accuracy": 0.386,
+        "score": 462,
+        "max_score": 1197
       },
       "direct_distillation": {
         "accuracy": 0.5196,
@@ -220,84 +220,84 @@
         "max_score": 1197
       },
       "multi_step_none": {
-        "accuracy": 0.386,
-        "score": 462,
-        "max_score": 1197
+        "accuracy": 0.3868,
+        "score": 470,
+        "max_score": 1215
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.3257,
-        "score": 384,
-        "max_score": 1179
+        "accuracy": 0.3241,
+        "score": 388,
+        "max_score": 1197
       },
       "multi_step_gated": {
-        "accuracy": 0.3732,
-        "score": 440,
-        "max_score": 1179
+        "accuracy": 0.3778,
+        "score": 459,
+        "max_score": 1215
       },
       "multi_step_distillation": {
-        "accuracy": 0.4758,
-        "score": 561,
-        "max_score": 1179
+        "accuracy": 0.4728,
+        "score": 566,
+        "max_score": 1197
       },
       "chain_none": {
-        "accuracy": 0.3579,
-        "score": 422,
-        "max_score": 1179
+        "accuracy": 0.3539,
+        "score": 430,
+        "max_score": 1215
       },
       "chain_inference_scaling": {
-        "accuracy": 0.3622,
-        "score": 427,
-        "max_score": 1179
+        "accuracy": 0.3609,
+        "score": 432,
+        "max_score": 1197
       },
       "chain_gated": {
-        "accuracy": 0.3757,
-        "score": 443,
-        "max_score": 1179
+        "accuracy": 0.3759,
+        "score": 450,
+        "max_score": 1197
       },
       "chain_distillation": {
-        "accuracy": 0.5327,
-        "score": 628,
-        "max_score": 1179
+        "accuracy": 0.5338,
+        "score": 639,
+        "max_score": 1197
       },
       "tree_none": {
-        "accuracy": 0.3011,
-        "score": 355,
-        "max_score": 1179
+        "accuracy": 0.3008,
+        "score": 360,
+        "max_score": 1197
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3452,
-        "score": 407,
-        "max_score": 1179
+        "accuracy": 0.3434,
+        "score": 411,
+        "max_score": 1197
       },
       "tree_gated": {
-        "accuracy": 0.3681,
-        "score": 434,
-        "max_score": 1179
+        "accuracy": 0.3718,
+        "score": 445,
+        "max_score": 1197
       },
       "tree_distillation": {
-        "accuracy": 0.4885,
-        "score": 576,
-        "max_score": 1179
+        "accuracy": 0.4962,
+        "score": 594,
+        "max_score": 1197
       },
       "continuous_none": {
-        "accuracy": 0.3707,
+        "accuracy": 0.3651,
         "score": 437,
-        "max_score": 1179
+        "max_score": 1197
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3664,
+        "accuracy": 0.3609,
         "score": 432,
-        "max_score": 1179
+        "max_score": 1197
       },
       "continuous_gated": {
-        "accuracy": 0.3588,
-        "score": 423,
-        "max_score": 1179
+        "accuracy": 0.3617,
+        "score": 433,
+        "max_score": 1197
       },
       "continuous_distillation": {
-        "accuracy": 0.486,
-        "score": 573,
-        "max_score": 1179
+        "accuracy": 0.4837,
+        "score": 579,
+        "max_score": 1197
       }
     }
   }
