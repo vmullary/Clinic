@@ -195,44 +195,44 @@
   {
     "timestamp": "2026-04-27T05:28:15.507850+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 2186,
+    "total_tasks": 2206,
     "failed": 0,
-    "elapsed_seconds": 138023.8,
+    "elapsed_seconds": 138355.2,
     "scores": {
       "direct_none": {
-        "accuracy": 0.3792,
-        "score": 695,
-        "max_score": 1833
+        "accuracy": 0.3771,
+        "score": 698,
+        "max_score": 1851
       },
       "direct_inference_scaling": {
-        "accuracy": 0.3966,
-        "score": 721,
-        "max_score": 1818
+        "accuracy": 0.4003,
+        "score": 741,
+        "max_score": 1851
       },
       "direct_gated": {
-        "accuracy": 0.3927,
-        "score": 714,
-        "max_score": 1818
+        "accuracy": 0.3933,
+        "score": 721,
+        "max_score": 1833
       },
       "direct_distillation": {
-        "accuracy": 0.5445,
+        "accuracy": 0.5392,
         "score": 998,
-        "max_score": 1833
+        "max_score": 1851
       },
       "multi_step_none": {
-        "accuracy": 0.3672,
-        "score": 673,
-        "max_score": 1833
+        "accuracy": 0.3679,
+        "score": 681,
+        "max_score": 1851
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.3393,
-        "score": 622,
-        "max_score": 1833
+        "accuracy": 0.3404,
+        "score": 630,
+        "max_score": 1851
       },
       "multi_step_gated": {
-        "accuracy": 0.3806,
-        "score": 692,
-        "max_score": 1818
+        "accuracy": 0.3835,
+        "score": 703,
+        "max_score": 1833
       },
       "multi_step_distillation": {
         "accuracy": 0.4643,
@@ -240,64 +240,64 @@
         "max_score": 1833
       },
       "chain_none": {
+        "accuracy": 0.3603,
+        "score": 667,
+        "max_score": 1851
+      },
+      "chain_inference_scaling": {
         "accuracy": 0.3601,
         "score": 660,
         "max_score": 1833
       },
-      "chain_inference_scaling": {
-        "accuracy": 0.3603,
-        "score": 655,
-        "max_score": 1818
-      },
       "chain_gated": {
-        "accuracy": 0.4158,
-        "score": 756,
-        "max_score": 1818
+        "accuracy": 0.4141,
+        "score": 759,
+        "max_score": 1833
       },
       "chain_distillation": {
-        "accuracy": 0.5622,
-        "score": 1022,
-        "max_score": 1818
+        "accuracy": 0.5597,
+        "score": 1026,
+        "max_score": 1833
       },
       "tree_none": {
-        "accuracy": 0.3278,
-        "score": 596,
-        "max_score": 1818
+        "accuracy": 0.329,
+        "score": 603,
+        "max_score": 1833
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3482,
-        "score": 633,
-        "max_score": 1818
+        "accuracy": 0.3486,
+        "score": 639,
+        "max_score": 1833
       },
       "tree_gated": {
-        "accuracy": 0.3762,
-        "score": 684,
-        "max_score": 1818
+        "accuracy": 0.377,
+        "score": 691,
+        "max_score": 1833
       },
       "tree_distillation": {
-        "accuracy": 0.5061,
-        "score": 920,
-        "max_score": 1818
+        "accuracy": 0.5079,
+        "score": 931,
+        "max_score": 1833
       },
       "continuous_none": {
-        "accuracy": 0.3614,
-        "score": 657,
-        "max_score": 1818
+        "accuracy": 0.3622,
+        "score": 664,
+        "max_score": 1833
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3773,
-        "score": 686,
-        "max_score": 1818
+        "accuracy": 0.3781,
+        "score": 693,
+        "max_score": 1833
       },
       "continuous_gated": {
-        "accuracy": 0.3812,
-        "score": 693,
-        "max_score": 1818
+        "accuracy": 0.3852,
+        "score": 706,
+        "max_score": 1833
       },
       "continuous_distillation": {
-        "accuracy": 0.5066,
-        "score": 921,
-        "max_score": 1818
+        "accuracy": 0.5063,
+        "score": 928,
+        "max_score": 1833
       }
     }
   }
