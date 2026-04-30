@@ -304,49 +304,49 @@
   {
     "timestamp": "2026-04-30T02:40:41.336991+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 1005,
+    "total_tasks": 1027,
     "failed": 0,
-    "elapsed_seconds": 48375.6,
+    "elapsed_seconds": 49668.2,
     "scores": {
       "direct_none": {
-        "accuracy": 0.3435,
-        "score": 305,
-        "max_score": 888
+        "accuracy": 0.3411,
+        "score": 309,
+        "max_score": 906
       },
       "direct_inference_scaling": {
-        "accuracy": 0.4212,
-        "score": 374,
-        "max_score": 888
+        "accuracy": 0.4216,
+        "score": 382,
+        "max_score": 906
       },
       "direct_gated": {
-        "accuracy": 0.3701,
-        "score": 322,
-        "max_score": 870
+        "accuracy": 0.3694,
+        "score": 328,
+        "max_score": 888
       },
       "direct_distillation": {
-        "accuracy": 0.5405,
-        "score": 480,
-        "max_score": 888
+        "accuracy": 0.5342,
+        "score": 484,
+        "max_score": 906
       },
       "multi_step_none": {
-        "accuracy": 0.3739,
-        "score": 332,
-        "max_score": 888
+        "accuracy": 0.3775,
+        "score": 342,
+        "max_score": 906
       },
       "multi_step_inference_scaling": {
-        "accuracy": 0.3333,
-        "score": 290,
-        "max_score": 870
+        "accuracy": 0.3355,
+        "score": 304,
+        "max_score": 906
       },
       "multi_step_gated": {
-        "accuracy": 0.3851,
-        "score": 335,
-        "max_score": 870
+        "accuracy": 0.3874,
+        "score": 344,
+        "max_score": 888
       },
       "multi_step_distillation": {
-        "accuracy": 0.508,
-        "score": 442,
-        "max_score": 870
+        "accuracy": 0.5066,
+        "score": 459,
+        "max_score": 906
       },
       "chain_none": {
         "accuracy": 0.3209,
@@ -354,59 +354,59 @@
         "max_score": 888
       },
       "chain_inference_scaling": {
-        "accuracy": 0.346,
-        "score": 301,
-        "max_score": 870
+        "accuracy": 0.3389,
+        "score": 307,
+        "max_score": 906
       },
       "chain_gated": {
-        "accuracy": 0.3575,
-        "score": 311,
-        "max_score": 870
+        "accuracy": 0.3559,
+        "score": 316,
+        "max_score": 888
       },
       "chain_distillation": {
-        "accuracy": 0.4299,
-        "score": 374,
-        "max_score": 870
+        "accuracy": 0.4324,
+        "score": 384,
+        "max_score": 888
       },
       "tree_none": {
-        "accuracy": 0.331,
-        "score": 288,
-        "max_score": 870
+        "accuracy": 0.3356,
+        "score": 298,
+        "max_score": 888
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3885,
-        "score": 338,
-        "max_score": 870
+        "accuracy": 0.3818,
+        "score": 339,
+        "max_score": 888
       },
       "tree_gated": {
-        "accuracy": 0.3563,
-        "score": 310,
-        "max_score": 870
+        "accuracy": 0.3637,
+        "score": 323,
+        "max_score": 888
       },
       "tree_distillation": {
-        "accuracy": 0.5103,
-        "score": 444,
-        "max_score": 870
+        "accuracy": 0.509,
+        "score": 452,
+        "max_score": 888
       },
       "continuous_none": {
-        "accuracy": 0.3678,
-        "score": 320,
-        "max_score": 870
+        "accuracy": 0.3649,
+        "score": 324,
+        "max_score": 888
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.4069,
-        "score": 354,
-        "max_score": 870
+        "accuracy": 0.4077,
+        "score": 362,
+        "max_score": 888
       },
       "continuous_gated": {
-        "accuracy": 0.323,
-        "score": 281,
-        "max_score": 870
+        "accuracy": 0.3266,
+        "score": 290,
+        "max_score": 888
       },
       "continuous_distillation": {
-        "accuracy": 0.4931,
-        "score": 429,
-        "max_score": 870
+        "accuracy": 0.4989,
+        "score": 443,
+        "max_score": 888
       }
     }
   }
