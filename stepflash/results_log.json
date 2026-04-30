@@ -304,14 +304,14 @@
   {
     "timestamp": "2026-04-30T02:40:41.336991+00:00",
     "model": "stepfun-ai/step-3.5-flash",
-    "total_tasks": 1565,
+    "total_tasks": 1585,
     "failed": 0,
-    "elapsed_seconds": 70067.8,
+    "elapsed_seconds": 70469.3,
     "scores": {
       "direct_none": {
-        "accuracy": 0.3527,
-        "score": 473,
-        "max_score": 1341
+        "accuracy": 0.3537,
+        "score": 487,
+        "max_score": 1377
       },
       "direct_inference_scaling": {
         "accuracy": 0.418,
@@ -319,19 +319,19 @@
         "max_score": 1359
       },
       "direct_gated": {
-        "accuracy": 0.352,
-        "score": 472,
-        "max_score": 1341
+        "accuracy": 0.3479,
+        "score": 479,
+        "max_score": 1377
       },
       "direct_distillation": {
-        "accuracy": 0.5556,
-        "score": 755,
-        "max_score": 1359
+        "accuracy": 0.5497,
+        "score": 757,
+        "max_score": 1377
       },
       "multi_step_none": {
-        "accuracy": 0.3554,
-        "score": 483,
-        "max_score": 1359
+        "accuracy": 0.3558,
+        "score": 490,
+        "max_score": 1377
       },
       "multi_step_inference_scaling": {
         "accuracy": 0.3311,
@@ -339,74 +339,74 @@
         "max_score": 1359
       },
       "multi_step_gated": {
-        "accuracy": 0.3811,
-        "score": 511,
-        "max_score": 1341
-      },
-      "multi_step_distillation": {
-        "accuracy": 0.5287,
-        "score": 709,
-        "max_score": 1341
-      },
-      "chain_none": {
-        "accuracy": 0.3076,
-        "score": 418,
+        "accuracy": 0.3804,
+        "score": 517,
         "max_score": 1359
       },
+      "multi_step_distillation": {
+        "accuracy": 0.5283,
+        "score": 718,
+        "max_score": 1359
+      },
+      "chain_none": {
+        "accuracy": 0.3079,
+        "score": 424,
+        "max_score": 1377
+      },
       "chain_inference_scaling": {
-        "accuracy": 0.343,
-        "score": 460,
-        "max_score": 1341
+        "accuracy": 0.34,
+        "score": 462,
+        "max_score": 1359
       },
       "chain_gated": {
-        "accuracy": 0.3557,
-        "score": 477,
-        "max_score": 1341
+        "accuracy": 0.3554,
+        "score": 483,
+        "max_score": 1359
       },
       "chain_distillation": {
-        "accuracy": 0.4355,
+        "accuracy": 0.4297,
         "score": 584,
-        "max_score": 1341
+        "max_score": 1359
       },
       "tree_none": {
-        "accuracy": 0.346,
-        "score": 464,
-        "max_score": 1341
+        "accuracy": 0.3488,
+        "score": 474,
+        "max_score": 1359
       },
       "tree_inference_scaling": {
-        "accuracy": 0.3587,
-        "score": 481,
-        "max_score": 1341
+        "accuracy": 0.3584,
+        "score": 487,
+        "max_score": 1359
       },
       "tree_gated": {
-        "accuracy": 0.355,
-        "score": 476,
-        "max_score": 1341
+        "accuracy": 0.3547,
+        "score": 482,
+        "max_score": 1359
       },
       "tree_distillation": {
-        "accuracy": 0.4892,
-        "score": 656,
-        "max_score": 1341
+        "accuracy": 0.4886,
+        "score": 664,
+        "max_score": 1359
       },
       "continuous_none": {
-        "accuracy": 0.3654,
-        "score": 490,
-        "max_score": 1341
+        "accuracy": 0.362,
+        "score": 492,
+        "max_score": 1359
       },
       "continuous_inference_scaling": {
-        "accuracy": 0.3661,
-        "score": 491,
-        "max_score": 1341
+        "accuracy": 0.3672,
+        "score": 499,
+        "max_score": 1359
       },
       "continuous_gated": {
-        "accuracy": 0.3624,
-        "score": 486,
-        "max_score": 1341
+        "accuracy": 0.3642,
+        "score": 495,
+        "max_score": 1359
       },
       "continuous_distillation": {
-        "accuracy": 0.4795,
-        "score": 643,
-        "max_score": 1341
+        "accuracy": 0.4761,
+        "score": 647,
+        "max_score": 1359
       }
     }
   }
